@@ -1,20 +1,23 @@
 import {gl}                     from './utils/webGL2.js';
 import * as webGL2              from './utils/webGL2.js';
 import {Camera}                 from './utils/camera.js';
+import {searchNeighbords}       from './utils/neightborhoodSearch.js';
+
 import {vsParticles}            from './shaders/utils/vs-renderParticles.js'
 import {fsColor}                from './shaders/utils/fs-simpleColor.js';
 import {fsTextureColor}         from './shaders/utils/fs-simpleTexture.js';
-import {fsCalculateSums}        from './shaders/utils/fs-sums.js';
 import {vsQuad}                 from './shaders/utils/vs-quad.js';
-import {vsRelativePosition}     from './shaders/utils/vs-relativePosition.js';
-import {fsGenerateMatrix}       from './shaders/utils/fs-generateMatrix.js';
-import {predictPositions}       from './shaders/utils/vs-applyForces.js';
-import {vsUpdateVelocity}       from './shaders/utils/vs-updateVelocity.js';
-import {vsCollisions}           from './shaders/utils/vs-collisions.js';
-import {fsGenerateLinearMatrix} from './shaders/utils/fs-generateLinearMatrix.js';
-import {vsTransformParticles}   from './shaders/utils/vs-transformParticles.js';
-import {fsCollisions}           from './shaders/utils/fs-collisions.js';
 import {vsRenderBGSphere}       from './shaders/utils/vs-renderBGSphere.js';
+
+import {fsCalculateSums}        from './shaders/shapeMatching/fs-sums.js';
+import {vsRelativePosition}     from './shaders/shapeMatching/vs-relativePosition.js';
+import {fsGenerateMatrix}       from './shaders/shapeMatching/fs-generateMatrix.js';
+import {predictPositions}       from './shaders/shapeMatching/vs-applyForces.js';
+import {vsUpdateVelocity}       from './shaders/shapeMatching/vs-updateVelocity.js';
+import {vsCollisions}           from './shaders/shapeMatching/vs-collisions.js';
+import {fsGenerateLinearMatrix} from './shaders/shapeMatching/fs-generateLinearMatrix.js';
+import {vsTransformParticles}   from './shaders/shapeMatching/vs-transformParticles.js';
+import {fsCollisions}           from './shaders/shapeMatching/fs-collisions.js';
 
 
 //=======================================================================================================
@@ -42,40 +45,23 @@ let totalParticles = 0;
 let totalIndexes = 0;
 let indexParticles = [];
 let particlesPerShape = [];
-const voxelResolution = 64;
-const stiffness = 0.1;
-const iterations = 6;
-const deltaTime = 0.1;
 
-let latitudeBands = 20;
-let longitudeBands = 20;
+const scale = 0.5;
+const voxelResolution = 128 * scale;
+
+
+const stiffness = 0.1;
+const iterations = 30;
+const deltaTime = 0.06;
+
+let latitudeBands = 30;
+let longitudeBands = 30;
 let amountOfShapes = 0;
 
 
 function generateSphere(radius, center, shapeId) {
 
     let partialParticles = 0;
-    amountOfShapes ++;
-
-
-    for (let i = 0; i < voxelResolution; i++) {
-        for (let j = 0; j < voxelResolution; j++) {
-            for (let k = 0; k < voxelResolution; k++) {
-
-                //Condition for the particle position and existence
-                let x = i - center.x;
-                let y = j - center.y;
-                let z = k - center.z;
-
-                if (x * x + y * y + z * z < radius * radius) {
-                    particlesPosition.push(i, j, k, shapeId);
-                    particlesVelocity.push(0, 0, 0, 0); //Velocity is zero for all the particles.
-                    totalParticles++;
-                    partialParticles++;
-                }
-            }
-        }
-    }
 
     for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
         let theta =  latNumber * Math.PI / latitudeBands;
@@ -98,6 +84,27 @@ function generateSphere(radius, center, shapeId) {
         }
     }
 
+
+    for (let i = 0; i < voxelResolution; i++) {
+        for (let j = 0; j < voxelResolution; j++) {
+            for (let k = 0; k < voxelResolution; k++) {
+
+                //Condition for the particle position and existence
+                let x = i - center.x;
+                let y = j - center.y;
+                let z = k - center.z;
+
+                if (x * x + y * y + z * z < radius * radius) {
+                    particlesPosition.push(i, j, k, shapeId);
+                    particlesVelocity.push(0, 0, 0, 0);
+                    totalParticles++;
+                    partialParticles++;
+                }
+            }
+        }
+    }
+
+
     particlesPerShape.push(partialParticles);
 
 
@@ -106,25 +113,28 @@ function generateSphere(radius, center, shapeId) {
             let first = (latNumber * (longitudeBands + 1)) + longNumber;
             let second = first + longitudeBands + 1;
 
-            indexParticles.push(first);
-            indexParticles.push(second);
-            indexParticles.push(first + 1);
+            indexParticles.push(first + partialParticles * amountOfShapes);
+            indexParticles.push(second + partialParticles * amountOfShapes);
+            indexParticles.push(first + 1 + partialParticles * amountOfShapes);
 
-            indexParticles.push(second);
-            indexParticles.push(second + 1);
-            indexParticles.push(first + 1);
-            totalIndexes +=6;
+            indexParticles.push(second + partialParticles * amountOfShapes);
+            indexParticles.push(second + 1 + partialParticles * amountOfShapes);
+            indexParticles.push(first + 1 + partialParticles * amountOfShapes);
+            totalIndexes += 6;
         }
     }
+
+    amountOfShapes ++;
+
 }
 
 //Generate the soft body spheres
-generateSphere(8, {x: 32, y: 32, z: 15}, 1);
-generateSphere(8, {x: 32, y: 42, z: 47}, 2);
-generateSphere(10, {x: 17, y: 32, z: 32}, 3);
+generateSphere(14 * scale, {x: 64 * scale, y: 90 * scale, z: 64 * scale}, 1);
+generateSphere(14 * scale, {x: 64 * scale, y: 60 * scale, z: 64 * scale}, 2);
+generateSphere(14 * scale, {x: 64 * scale, y: 30 * scale, z: 64 * scale}, 3);
 
 
-//let borderSphereIndexes = webGL2.createBuffer(indexParticles, true);
+let borderSphereIndexes = webGL2.createBuffer(indexParticles, true);
 
 
 ////Generate information for the containing sphere
@@ -283,7 +293,9 @@ updateVelocityProgram.deltaTime =               gl.getUniformLocation(updateVelo
 let collisionsProgram =                         webGL2.generateProgram(vsCollisions, fsCollisions);
 collisionsProgram.positions =                   gl.getUniformLocation(collisionsProgram, "uPositions");
 collisionsProgram.prevPositions =               gl.getUniformLocation(collisionsProgram, "uPrevPositions");
-collisionsProgram.voxelResolution =             gl.getUniformLocation(collisionsProgram, "uVoxelResolution");
+collisionsProgram.centerOfMass =                gl.getUniformLocation(collisionsProgram, "uCenterOfMass");
+collisionsProgram.particlesPerShape =           gl.getUniformLocation(collisionsProgram, "uParticlesPerShape");
+
 
 
 let generateLinearMatrixProgram =               webGL2.generateProgram(vsQuad, fsGenerateLinearMatrix);
@@ -416,16 +428,18 @@ let render = () => {
     gl.drawArrays(gl.POINTS, 0, totalParticles);
 
 
-
     for(let i = 0; i < iterations; i ++) {
 
         //Evaluate the collisions for the particles
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, collisionsFB);
         gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
         gl.useProgram(collisionsProgram);
-        gl.uniform1f(collisionsProgram.voxelResolution, voxelResolution);
         webGL2.bindTexture(collisionsProgram.positions, iterationsTextureA, 0);
         webGL2.bindTexture(collisionsProgram.prevPositions, positionsTexture, 1);
+        webGL2.bindTexture(collisionsProgram.centerOfMass, centerOfMassTexture, 2);
+        webGL2.bindTexture(collisionsProgram.particlesPerShape, particlesPerShapeTexture, 3);
+
+
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.POINTS, 0, totalParticles);
 
@@ -501,19 +515,23 @@ let render = () => {
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.height, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-//    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.DEPTH_TEST);
 
 
     //Render the container sphere
-//    gl.useProgram(renderBGSphereProgram);
-//    webGL2.bindTexture(renderBGSphereProgram.positionTexture, positionsTexture, 0);
-//    gl.uniformMatrix4fv(renderBGSphereProgram.cameraMatrix, false, camera.cameraTransformMatrix);
-//    gl.uniformMatrix4fv(renderBGSphereProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
-//    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, borderSphereIndexes);
-//    gl.drawElements(gl.TRIANGLES, totalIndexes, gl.UNSIGNED_SHORT, 0);
+    gl.useProgram(renderBGSphereProgram);
+    webGL2.bindTexture(renderBGSphereProgram.positionTexture, positionsTexture, 0);
+    gl.uniformMatrix4fv(renderBGSphereProgram.cameraMatrix, false, camera.cameraTransformMatrix);
+    gl.uniformMatrix4fv(renderBGSphereProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, borderSphereIndexes);
+    gl.drawElements(gl.TRIANGLES, totalIndexes, gl.UNSIGNED_SHORT, 0);
 
 
 
+//    gl.useProgram(textureProgram);
+//    webGL2.bindTexture(textureProgram.texture, voxelsTexture, 0);
+//    gl.clear(gl.COLOR_BUFFER_BIT);
+//    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
     //Render the particles from the soft body
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -525,7 +543,6 @@ let render = () => {
     gl.uniformMatrix4fv(renderParticlesProgram.cameraMatrix, false, camera.cameraTransformMatrix);
     gl.uniformMatrix4fv(renderParticlesProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
     gl.drawArrays(gl.POINTS, 0, totalParticles);
-//    gl.disable(gl.DEPTH_TEST);
 
 
 

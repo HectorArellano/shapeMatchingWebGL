@@ -39,7 +39,7 @@ void main() {
      Using Babylonian method to evaluate the square root.
      */
 
-    for(int i = 0; i < 20; i ++) {
+    for(int i = 0; i < 40; i ++) {
 
         Si = 0.5 * (Si + S * inverse(Si));
 
@@ -49,7 +49,7 @@ void main() {
 
     //Linear extension
     mat3 A = Apq * inverse(Aqq);
-    A = pow(determinant(A), 1./ 4.) * A;
+    A = pow(determinant(A), 1./ 5.) * A;
 
     float beta = 0.5;
     A = beta * A + (1. - beta) * R;
