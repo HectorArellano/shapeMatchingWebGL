@@ -42,9 +42,9 @@ let totalParticles = 0;
 let totalIndexes = 0;
 let indexParticles = [];
 let particlesPerShape = [];
-const voxelResolution = 128;
+const voxelResolution = 64;
 const stiffness = 0.1;
-const iterations = 12;
+const iterations = 6;
 const deltaTime = 0.1;
 
 let latitudeBands = 20;
@@ -57,25 +57,25 @@ function generateSphere(radius, center, shapeId) {
     let partialParticles = 0;
     amountOfShapes ++;
 
-//
-//    for (let i = 0; i < voxelResolution; i++) {
-//        for (let j = 0; j < voxelResolution; j++) {
-//            for (let k = 0; k < voxelResolution; k++) {
-//
-//                //Condition for the particle position and existence
-//                let x = i - center.x;
-//                let y = j - center.y;
-//                let z = k - center.z;
-//
-//                if (x * x + y * y + z * z < radius * radius) {
-//                    particlesPosition.push(i, j, k, 1);
-//                    particlesVelocity.push(0, 0, 0, 0); //Velocity is zero for all the particles.
-//                    totalParticles++;
-//                    partialParticles++;
-//                }
-//            }
-//        }
-//    }
+
+    for (let i = 0; i < voxelResolution; i++) {
+        for (let j = 0; j < voxelResolution; j++) {
+            for (let k = 0; k < voxelResolution; k++) {
+
+                //Condition for the particle position and existence
+                let x = i - center.x;
+                let y = j - center.y;
+                let z = k - center.z;
+
+                if (x * x + y * y + z * z < radius * radius) {
+                    particlesPosition.push(i, j, k, shapeId);
+                    particlesVelocity.push(0, 0, 0, 0); //Velocity is zero for all the particles.
+                    totalParticles++;
+                    partialParticles++;
+                }
+            }
+        }
+    }
 
     for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
         let theta =  latNumber * Math.PI / latitudeBands;
@@ -119,9 +119,10 @@ function generateSphere(radius, center, shapeId) {
 }
 
 //Generate the soft body spheres
-generateSphere(15, {x: 64, y: 64, z: 30}, 1);
-generateSphere(15, {x: 64, y: 84, z: 94}, 2);
-generateSphere(20, {x: 34, y: 64, z: 64}, 3);
+generateSphere(8, {x: 32, y: 32, z: 15}, 1);
+generateSphere(8, {x: 32, y: 42, z: 47}, 2);
+generateSphere(10, {x: 17, y: 32, z: 32}, 3);
+
 
 //let borderSphereIndexes = webGL2.createBuffer(indexParticles, true);
 
@@ -282,6 +283,7 @@ updateVelocityProgram.deltaTime =               gl.getUniformLocation(updateVelo
 let collisionsProgram =                         webGL2.generateProgram(vsCollisions, fsCollisions);
 collisionsProgram.positions =                   gl.getUniformLocation(collisionsProgram, "uPositions");
 collisionsProgram.prevPositions =               gl.getUniformLocation(collisionsProgram, "uPrevPositions");
+collisionsProgram.voxelResolution =             gl.getUniformLocation(collisionsProgram, "uVoxelResolution");
 
 
 let generateLinearMatrixProgram =               webGL2.generateProgram(vsQuad, fsGenerateLinearMatrix);
@@ -421,6 +423,7 @@ let render = () => {
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, collisionsFB);
         gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
         gl.useProgram(collisionsProgram);
+        gl.uniform1f(collisionsProgram.voxelResolution, voxelResolution);
         webGL2.bindTexture(collisionsProgram.positions, iterationsTextureA, 0);
         webGL2.bindTexture(collisionsProgram.prevPositions, positionsTexture, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -498,7 +501,7 @@ let render = () => {
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.height, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.enable(gl.DEPTH_TEST);
+//    gl.enable(gl.DEPTH_TEST);
 
 
     //Render the container sphere
@@ -521,7 +524,7 @@ let render = () => {
     gl.uniformMatrix4fv(renderParticlesProgram.cameraMatrix, false, camera.cameraTransformMatrix);
     gl.uniformMatrix4fv(renderParticlesProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
     gl.drawArrays(gl.POINTS, 0, totalParticles);
-    gl.disable(gl.DEPTH_TEST);
+//    gl.disable(gl.DEPTH_TEST);
 
 
 

@@ -39,7 +39,7 @@ void main() {
      Using Babylonian method to evaluate the square root.
      */
 
-    for(int i = 0; i < 40; i ++) {
+    for(int i = 0; i < 20; i ++) {
 
         Si = 0.5 * (Si + S * inverse(Si));
 

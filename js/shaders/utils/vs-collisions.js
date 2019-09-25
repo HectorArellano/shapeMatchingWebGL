@@ -5,6 +5,7 @@ precision highp sampler2D;
 
 uniform sampler2D uPositions;
 uniform sampler2D uPrevPositions;
+uniform float uVoxelResolution;
 
 out vec4 colorData1;
 out vec4 colorData2;
@@ -21,8 +22,8 @@ void main() {
 
 
     //Collision against a sphere border
-    vec3 center = vec3(128. * 0.5);
-    float radius = 120. * 0.5;
+    vec3 center = vec3(uVoxelResolution * 0.5);
+    float radius = uVoxelResolution * 0.48;
     vec3 normal = position - center;
     float n = length(normal);
     float distance = n -  radius;

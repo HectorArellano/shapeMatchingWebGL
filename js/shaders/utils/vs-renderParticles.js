@@ -25,7 +25,7 @@ void main() {
 
     vec3 position = spacePosition / uScale;
 
-    colorData.rgb = centerOfMass / 64.;
+    colorData.rgb =vec3(1.);
 
     colorData.a = 1.;
 
