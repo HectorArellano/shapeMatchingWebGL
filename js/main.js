@@ -22,8 +22,8 @@ import {vsRenderBGSphere}       from './shaders/utils/vs-renderBGSphere.js';
 //=======================================================================================================
 
 let canvas = document.querySelector("#canvas3D");
-canvas.height = 1000;
-canvas.width = canvas.height;
+canvas.height = window.innerHeight;
+canvas.width = window.innerWidth;
 canvas.style.width = String(canvas.width) + "px";
 canvas.style.height = String(canvas.height) + "px";
 webGL2.setContext(canvas);
@@ -396,7 +396,7 @@ let render = () => {
 
     requestAnimationFrame(render);
 
-    camera.updateCamera(FOV, 1, cameraDistance);
+    camera.updateCamera(FOV, canvas.width / canvas.height, cameraDistance);
     let acceleration = {
         x: 0 * Math.sin(currentFrame * Math.PI / 180),
         y: -10,
@@ -516,6 +516,7 @@ let render = () => {
 
 
     //Render the particles from the soft body
+    gl.viewport(0, 0, canvas.width, canvas.height);
     gl.useProgram(renderParticlesProgram);
     webGL2.bindTexture(renderParticlesProgram.positionTexture, relativePositionTexture, 0);
     webGL2.bindTexture(renderParticlesProgram.centerOfMass, centerOfMassTexture, 1);
