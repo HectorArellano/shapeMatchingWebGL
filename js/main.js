@@ -50,7 +50,7 @@ const scale = 0.5;
 const voxelResolution = 128 * scale;
 
 
-const stiffness = 0.1;
+const stiffness = 0.07;
 const iterations = 30;
 const deltaTime = 0.06;
 
@@ -518,6 +518,8 @@ let render = () => {
     gl.enable(gl.DEPTH_TEST);
 
 
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
     //Render the container sphere
     gl.useProgram(renderBGSphereProgram);
     webGL2.bindTexture(renderBGSphereProgram.positionTexture, positionsTexture, 0);
@@ -534,7 +536,6 @@ let render = () => {
 //    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
     //Render the particles from the soft body
-    gl.viewport(0, 0, canvas.width, canvas.height);
     gl.useProgram(renderParticlesProgram);
     webGL2.bindTexture(renderParticlesProgram.positionTexture, relativePositionTexture, 0);
     webGL2.bindTexture(renderParticlesProgram.centerOfMass, centerOfMassTexture, 1);
