@@ -40,7 +40,7 @@ void main() {
             float d = length(dist);
 
             //collides with the bounding sphere
-            const float rd = 6.8;
+            const float rd = 6.;
             if(d < rd) {
             
                 position = rd * normalize(dist) + centerOfMass / float(particlesPerShape);

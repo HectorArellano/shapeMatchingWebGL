@@ -50,8 +50,8 @@ const scale = 0.5;
 const voxelResolution = 128 * scale;
 
 
-const stiffness = 0.03;
-const iterations = 30;
+const stiffness = 0.2;
+const iterations = 2;
 const deltaTime = 0.1;
 
 let latitudeBands = 30;
@@ -132,7 +132,7 @@ function generateSphere(radius, center, shapeId) {
 generateSphere(14 * scale, {x: 64 * scale, y: 64 * scale, z: 34 * scale}, 1);
 generateSphere(14 * scale, {x: 64 * scale, y: 64 * scale, z: 64 * scale}, 2);
 generateSphere(14 * scale, {x: 64 * scale, y: 64 * scale, z: 94 * scale}, 3);
-generateSphere(14 * scale, {x: 64 * scale, y: 90 * scale, z: 64 * scale}, 4);
+generateSphere(14 * scale, {x: 64 * scale, y: 100 * scale, z: 64 * scale}, 4);
 generateSphere(14 * scale, {x: 64 * scale, y: 30 * scale, z: 64 * scale}, 5);
 
 
