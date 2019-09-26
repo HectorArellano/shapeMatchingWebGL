@@ -50,9 +50,9 @@ const scale = 0.5;
 const voxelResolution = 128 * scale;
 
 
-const stiffness = 0.1;
+const stiffness = 0.03;
 const iterations = 30;
-const deltaTime = 0.06;
+const deltaTime = 0.1;
 
 let latitudeBands = 30;
 let longitudeBands = 30;
@@ -85,24 +85,24 @@ function generateSphere(radius, center, shapeId) {
     }
 
 
-    for (let i = 0; i < voxelResolution; i++) {
-        for (let j = 0; j < voxelResolution; j++) {
-            for (let k = 0; k < voxelResolution; k++) {
-
-                //Condition for the particle position and existence
-                let x = i - center.x;
-                let y = j - center.y;
-                let z = k - center.z;
-
-                if (x * x + y * y + z * z < radius * radius) {
-                    particlesPosition.push(i, j, k, shapeId);
-                    particlesVelocity.push(0, 0, 0, 0);
-                    totalParticles++;
-                    partialParticles++;
-                }
-            }
-        }
-    }
+    // for (let i = 0; i < voxelResolution; i++) {
+    //     for (let j = 0; j < voxelResolution; j++) {
+    //         for (let k = 0; k < voxelResolution; k++) {
+    //
+    //             //Condition for the particle position and existence
+    //             let x = i - center.x;
+    //             let y = j - center.y;
+    //             let z = k - center.z;
+    //
+    //             if (x * x + y * y + z * z < radius * radius) {
+    //                 particlesPosition.push(i, j, k, shapeId);
+    //                 particlesVelocity.push(0, 0, 0, 0);
+    //                 totalParticles++;
+    //                 partialParticles++;
+    //             }
+    //         }
+    //     }
+    // }
 
 
     particlesPerShape.push(partialParticles);
@@ -132,6 +132,8 @@ function generateSphere(radius, center, shapeId) {
 generateSphere(14 * scale, {x: 64 * scale, y: 64 * scale, z: 34 * scale}, 1);
 generateSphere(14 * scale, {x: 64 * scale, y: 64 * scale, z: 64 * scale}, 2);
 generateSphere(14 * scale, {x: 64 * scale, y: 64 * scale, z: 94 * scale}, 3);
+generateSphere(14 * scale, {x: 64 * scale, y: 90 * scale, z: 64 * scale}, 4);
+generateSphere(14 * scale, {x: 64 * scale, y: 30 * scale, z: 64 * scale}, 5);
 
 
 let borderSphereIndexes = webGL2.createBuffer(indexParticles, true);
@@ -523,12 +525,12 @@ let render = () => {
 
 
     //Render the container sphere
-//    gl.useProgram(renderBGSphereProgram);
-//    webGL2.bindTexture(renderBGSphereProgram.positionTexture, positionsTexture, 0);
-//    gl.uniformMatrix4fv(renderBGSphereProgram.cameraMatrix, false, camera.cameraTransformMatrix);
-//    gl.uniformMatrix4fv(renderBGSphereProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
-//    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, borderSphereIndexes);
-//    gl.drawElements(gl.TRIANGLES, totalIndexes, gl.UNSIGNED_SHORT, 0);
+   gl.useProgram(renderBGSphereProgram);
+   webGL2.bindTexture(renderBGSphereProgram.positionTexture, positionsTexture, 0);
+   gl.uniformMatrix4fv(renderBGSphereProgram.cameraMatrix, false, camera.cameraTransformMatrix);
+   gl.uniformMatrix4fv(renderBGSphereProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
+   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, borderSphereIndexes);
+   gl.drawElements(gl.TRIANGLES, totalIndexes, gl.UNSIGNED_SHORT, 0);
 
 
 
