@@ -28,7 +28,7 @@ void main() {
 
     colorData.rgb =vec3(1.);
 
-    colorData.a = 1.;
+    colorData.a = 0.4;
 
     gl_Position = uPMatrix * uCameraMatrix * vec4(position, 1.);
 

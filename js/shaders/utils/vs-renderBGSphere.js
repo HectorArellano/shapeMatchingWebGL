@@ -20,7 +20,7 @@ void main() {
     vec4 positions = vec4(spacePosition.rgb / 64., 1.);
 
     gl_Position = uPMatrix * uCameraMatrix * positions;
-    colorData = vec4(positions.rgb, 1.);
+    colorData = vec4(positions.rgb, .5);
 }
 `;
 

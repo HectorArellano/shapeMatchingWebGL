@@ -514,8 +514,8 @@ let render = () => {
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.height, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.enable(gl.DEPTH_TEST);
-//    gl.enable(gl.BLEND);
+//    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
 
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -541,7 +541,7 @@ let render = () => {
     gl.uniformMatrix4fv(renderParticlesProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
     gl.drawArrays(gl.POINTS, 0, totalParticles);
     gl.disable(gl.DEPTH_TEST);
-//    gl.disable(gl.BLEND);
+    gl.disable(gl.BLEND);
 
 
 
