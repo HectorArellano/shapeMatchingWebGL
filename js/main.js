@@ -43,7 +43,7 @@ let totalIndexes = 0;
 let indexParticles = [];
 let particlesPerShape = [];
 const voxelResolution = 64;
-const stiffness = 0.1;
+const stiffness = 0.99;
 const iterations = 6;
 const deltaTime = 0.1;
 
@@ -58,24 +58,24 @@ function generateSphere(radius, center, shapeId) {
     amountOfShapes ++;
 
 
-    for (let i = 0; i < voxelResolution; i++) {
-        for (let j = 0; j < voxelResolution; j++) {
-            for (let k = 0; k < voxelResolution; k++) {
-
-                //Condition for the particle position and existence
-                let x = i - center.x;
-                let y = j - center.y;
-                let z = k - center.z;
-
-                if (x * x + y * y + z * z < radius * radius) {
-                    particlesPosition.push(i, j, k, shapeId);
-                    particlesVelocity.push(0, 0, 0, 0); //Velocity is zero for all the particles.
-                    totalParticles++;
-                    partialParticles++;
-                }
-            }
-        }
-    }
+//    for (let i = 0; i < voxelResolution; i++) {
+//        for (let j = 0; j < voxelResolution; j++) {
+//            for (let k = 0; k < voxelResolution; k++) {
+//
+//                //Condition for the particle position and existence
+//                let x = i - center.x;
+//                let y = j - center.y;
+//                let z = k - center.z;
+//
+//                if (x * x + y * y + z * z < radius * radius) {
+//                    particlesPosition.push(i, j, k, shapeId);
+//                    particlesVelocity.push(0, 0, 0, 0); //Velocity is zero for all the particles.
+//                    totalParticles++;
+//                    partialParticles++;
+//                }
+//            }
+//        }
+//    }
 
     for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
         let theta =  latNumber * Math.PI / latitudeBands;
