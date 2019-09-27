@@ -50,9 +50,9 @@ const scale = 0.5;
 const voxelResolution = 128 * scale;
 
 
-const stiffness = 0.07;
-const iterations = 30;
-const deltaTime = 0.06;
+const stiffness = 0.2;
+const iterations = 2;
+const deltaTime = 0.1;
 
 let latitudeBands = 30;
 let longitudeBands = 30;
@@ -85,24 +85,24 @@ function generateSphere(radius, center, shapeId) {
     }
 
 
-    for (let i = 0; i < voxelResolution; i++) {
-        for (let j = 0; j < voxelResolution; j++) {
-            for (let k = 0; k < voxelResolution; k++) {
-
-                //Condition for the particle position and existence
-                let x = i - center.x;
-                let y = j - center.y;
-                let z = k - center.z;
-
-                if (x * x + y * y + z * z < radius * radius) {
-                    particlesPosition.push(i, j, k, shapeId);
-                    particlesVelocity.push(0, 0, 0, 0);
-                    totalParticles++;
-                    partialParticles++;
-                }
-            }
-        }
-    }
+    // for (let i = 0; i < voxelResolution; i++) {
+    //     for (let j = 0; j < voxelResolution; j++) {
+    //         for (let k = 0; k < voxelResolution; k++) {
+    //
+    //             //Condition for the particle position and existence
+    //             let x = i - center.x;
+    //             let y = j - center.y;
+    //             let z = k - center.z;
+    //
+    //             if (x * x + y * y + z * z < radius * radius) {
+    //                 particlesPosition.push(i, j, k, shapeId);
+    //                 particlesVelocity.push(0, 0, 0, 0);
+    //                 totalParticles++;
+    //                 partialParticles++;
+    //             }
+    //         }
+    //     }
+    // }
 
 
     particlesPerShape.push(partialParticles);
@@ -129,9 +129,11 @@ function generateSphere(radius, center, shapeId) {
 }
 
 //Generate the soft body spheres
-generateSphere(14 * scale, {x: 64 * scale, y: 90 * scale, z: 64 * scale}, 1);
-generateSphere(14 * scale, {x: 64 * scale, y: 60 * scale, z: 64 * scale}, 2);
-generateSphere(14 * scale, {x: 64 * scale, y: 30 * scale, z: 64 * scale}, 3);
+generateSphere(14 * scale, {x: 64 * scale, y: 64 * scale, z: 34 * scale}, 1);
+generateSphere(14 * scale, {x: 64 * scale, y: 64 * scale, z: 64 * scale}, 2);
+generateSphere(14 * scale, {x: 64 * scale, y: 64 * scale, z: 94 * scale}, 3);
+generateSphere(14 * scale, {x: 64 * scale, y: 100 * scale, z: 64 * scale}, 4);
+generateSphere(14 * scale, {x: 64 * scale, y: 30 * scale, z: 64 * scale}, 5);
 
 
 let borderSphereIndexes = webGL2.createBuffer(indexParticles, true);
@@ -348,12 +350,12 @@ let calculateSums = (initialTexture, outputFramebuffer, shapeId) => {
     }
 }
 
-let calculateRelativePositions = (centerOfMassTexture, outputFramebuffer) => {
+let calculateRelativePositions = (centerOfMassTexture, pTexture, outputFramebuffer) => {
     gl.useProgram(relativePositionProgram);
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, outputFramebuffer);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
-    webGL2.bindTexture(relativePositionProgram.positions, iterationsTextureB, 0);
+    webGL2.bindTexture(relativePositionProgram.positions, pTexture, 0);
     webGL2.bindTexture(relativePositionProgram.centerOfMass, centerOfMassTexture, 1);
     webGL2.bindTexture(relativePositionProgram.particlesPerShape, particlesPerShapeTexture, 2);
     gl.drawArrays(gl.POINTS, 0, totalParticles);
@@ -378,18 +380,66 @@ let startMatrixApq = (textureP, textureQ, outputFBs) => {
     }
 }
 
+let calculateCollisions = () => {
+
+    //Evaluate the collisions for the particles
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, collisionsFB);
+    gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
+    gl.useProgram(collisionsProgram);
+    webGL2.bindTexture(collisionsProgram.positions, iterationsTextureA, 0);
+    webGL2.bindTexture(collisionsProgram.prevPositions, positionsTexture, 1);
+    webGL2.bindTexture(collisionsProgram.centerOfMass, centerOfMassTexture, 2);
+    webGL2.bindTexture(collisionsProgram.particlesPerShape, particlesPerShapeTexture, 3);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, totalParticles);
+
+}
+
+let transformVertices = () => {
+
+    //Calculate the linear matrix
+    for(let q = 0; q < amountOfShapes; q ++) {
+        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, linearMatrixFB);
+        gl.viewport(q, 0, 1, 1);
+        gl.useProgram(generateLinearMatrixProgram);
+        gl.uniform1i(generateLinearMatrixProgram.shapeId, q);
+        webGL2.bindTexture(generateLinearMatrixProgram.Aqq0, AqqTexture0, 0);
+        webGL2.bindTexture(generateLinearMatrixProgram.Aqq1, AqqTexture1, 1);
+        webGL2.bindTexture(generateLinearMatrixProgram.Aqq2, AqqTexture2, 2);
+        webGL2.bindTexture(generateLinearMatrixProgram.Apq0, ApqTexture0, 3);
+        webGL2.bindTexture(generateLinearMatrixProgram.Apq1, ApqTexture1, 4);
+        webGL2.bindTexture(generateLinearMatrixProgram.Apq2, ApqTexture2, 5);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+
+
+    //Transform the positions using the previous linear matrix
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, iterationsAfb);
+    gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
+    gl.useProgram(transformParticlesProgram);
+    gl.uniform1f(transformParticlesProgram.stiffness, stiffness);
+    webGL2.bindTexture(transformParticlesProgram.positions, iterationsTextureB, 0);
+    webGL2.bindTexture(transformParticlesProgram.relPositions, initialRelativePositionTexture, 1);
+    webGL2.bindTexture(transformParticlesProgram.centerOfMass, centerOfMassTexture, 2);
+    webGL2.bindTexture(transformParticlesProgram.linearMatrix0, linearMatrixTexture0, 3);
+    webGL2.bindTexture(transformParticlesProgram.linearMatrix1, linearMatrixTexture1, 4);
+    webGL2.bindTexture(transformParticlesProgram.linearMatrix2, linearMatrixTexture2, 5);
+    webGL2.bindTexture(transformParticlesProgram.particlesPerShape, particlesPerShapeTexture, 6);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, totalParticles);
+
+}
+
 
 //=======================================================================================================
 // Initial Steps
 //=======================================================================================================
 
 //Calculate the initial center of mass for the shape
-for(let i = 1; i <= amountOfShapes; i ++) {
-    calculateSums(positionsTexture, initialCenterOfMassFB, i);
-}
+for(let i = 1; i <= amountOfShapes; i ++) calculateSums(positionsTexture, initialCenterOfMassFB, i);
 
 //Calculate the initial relative positions
-calculateRelativePositions(initialCenterOfMassTexture, initialRelativePositionFramebuffer);
+calculateRelativePositions(initialCenterOfMassTexture, positionsTexture, initialRelativePositionFramebuffer);
 
 //Calculate the initial Aqq (non inverted) matrix for the shape
 startMatrixApq(initialRelativePositionTexture, initialRelativePositionTexture, [AqqFB0, AqqFB1, AqqFB2]);
@@ -408,7 +458,7 @@ let render = () => {
 
     requestAnimationFrame(render);
 
-    camera.updateCamera(FOV, canvas.width / canvas.height, cameraDistance);
+    camera.updateCamera(FOV, canvas.width/canvas.height, cameraDistance);
     let acceleration = {
         x: 0 * Math.sin(currentFrame * Math.PI / 180),
         y: -10,
@@ -430,64 +480,20 @@ let render = () => {
 
     for(let i = 0; i < iterations; i ++) {
 
-        //Evaluate the collisions for the particles
-        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, collisionsFB);
-        gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
-        gl.useProgram(collisionsProgram);
-        webGL2.bindTexture(collisionsProgram.positions, iterationsTextureA, 0);
-        webGL2.bindTexture(collisionsProgram.prevPositions, positionsTexture, 1);
-        webGL2.bindTexture(collisionsProgram.centerOfMass, centerOfMassTexture, 2);
-        webGL2.bindTexture(collisionsProgram.particlesPerShape, particlesPerShapeTexture, 3);
-
-
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.POINTS, 0, totalParticles);
-
-
         //Calculate the center of mass for the current frame
-        for(let q = 1; q <= amountOfShapes; q ++) {
-            calculateSums(iterationsTextureB, centerOfMassFB, q);
-        }
+        for(let q = 1; q <= amountOfShapes; q ++) calculateSums(iterationsTextureB, centerOfMassFB, q);
+
+        //Calculate the collisions with the new center of mass
+        calculateCollisions();
 
         //Calculate the relative positions for the current frame with the current center of mass
-        calculateRelativePositions(centerOfMassTexture, relativePositionFramebuffer);
-
+        calculateRelativePositions(centerOfMassTexture, iterationsTextureB, relativePositionFramebuffer);
 
         //Start the calculation of the Apq matrix
         startMatrixApq(relativePositionTexture, initialRelativePositionTexture, [ApqFB0, ApqFB1, ApqFB2]);
 
-
-        //Calculate the linear matrix
-        for(let q = 0; q < amountOfShapes; q ++) {
-            gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, linearMatrixFB);
-            gl.viewport(q, 0, 1, 1);
-            gl.useProgram(generateLinearMatrixProgram);
-            gl.uniform1i(generateLinearMatrixProgram.shapeId, q);
-            webGL2.bindTexture(generateLinearMatrixProgram.Aqq0, AqqTexture0, 0);
-            webGL2.bindTexture(generateLinearMatrixProgram.Aqq1, AqqTexture1, 1);
-            webGL2.bindTexture(generateLinearMatrixProgram.Aqq2, AqqTexture2, 2);
-            webGL2.bindTexture(generateLinearMatrixProgram.Apq0, ApqTexture0, 3);
-            webGL2.bindTexture(generateLinearMatrixProgram.Apq1, ApqTexture1, 4);
-            webGL2.bindTexture(generateLinearMatrixProgram.Apq2, ApqTexture2, 5);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        }
-
-
-        //Transform the positions using the previous linear matrix
-        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, iterationsAfb);
-        gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
-        gl.useProgram(transformParticlesProgram);
-        gl.uniform1f(transformParticlesProgram.stiffness, stiffness);
-        webGL2.bindTexture(transformParticlesProgram.positions, iterationsTextureB, 0);
-        webGL2.bindTexture(transformParticlesProgram.relPositions, initialRelativePositionTexture, 1);
-        webGL2.bindTexture(transformParticlesProgram.centerOfMass, centerOfMassTexture, 2);
-        webGL2.bindTexture(transformParticlesProgram.linearMatrix0, linearMatrixTexture0, 3);
-        webGL2.bindTexture(transformParticlesProgram.linearMatrix1, linearMatrixTexture1, 4);
-        webGL2.bindTexture(transformParticlesProgram.linearMatrix2, linearMatrixTexture2, 5);
-        webGL2.bindTexture(transformParticlesProgram.particlesPerShape, particlesPerShapeTexture, 6);
-
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.POINTS, 0, totalParticles);
+        //Transform the vertices
+        transformVertices();
 
     }
 
@@ -513,20 +519,18 @@ let render = () => {
 
 
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
-    gl.viewport(0, 0, canvas.height, canvas.height);
+    gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
 
 
-    gl.viewport(0, 0, canvas.width, canvas.height);
-
     //Render the container sphere
-    gl.useProgram(renderBGSphereProgram);
-    webGL2.bindTexture(renderBGSphereProgram.positionTexture, positionsTexture, 0);
-    gl.uniformMatrix4fv(renderBGSphereProgram.cameraMatrix, false, camera.cameraTransformMatrix);
-    gl.uniformMatrix4fv(renderBGSphereProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, borderSphereIndexes);
-    gl.drawElements(gl.TRIANGLES, totalIndexes, gl.UNSIGNED_SHORT, 0);
+   gl.useProgram(renderBGSphereProgram);
+   webGL2.bindTexture(renderBGSphereProgram.positionTexture, positionsTexture, 0);
+   gl.uniformMatrix4fv(renderBGSphereProgram.cameraMatrix, false, camera.cameraTransformMatrix);
+   gl.uniformMatrix4fv(renderBGSphereProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
+   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, borderSphereIndexes);
+   gl.drawElements(gl.TRIANGLES, totalIndexes, gl.UNSIGNED_SHORT, 0);
 
 
 

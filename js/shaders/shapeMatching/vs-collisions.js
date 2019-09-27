@@ -8,7 +8,7 @@ uniform sampler2D uPrevPositions;
 uniform sampler2D uCenterOfMass;
 uniform sampler2D uParticlesPerShape;
 
-const float radius = .4;
+const float radius = .7;
 
 out vec4 colorData1;
 out vec4 colorData2;
@@ -40,21 +40,25 @@ void main() {
             float d = length(dist);
 
             //collides with the bounding sphere
-            if(d < 7.) {
+            const float rd = 6.;
+            if(d < rd) {
+            
+                position = rd * normalize(dist) + centerOfMass / float(particlesPerShape);
+                prevPosition = position;
 
-                for(int l = i * particlesPerShape; l < (i + 1) * particlesPerShape; l ++) {
-
-                    vec2 ii = vec2(float(l % tSize) + 0.5, (floor(float(l) / textureSize)) + 0.5) / textureSize;
-                    vec3 c_position = texture(uPositions, ii).rgb;
-
-                    vec3 c_dist = position - c_position;
-                    d = length(c_dist);
-
-                    if(d < 2. * radius) {
-                        position += radius * normalize(c_dist);
-                    }
-
-                }
+                // for(int l = i * particlesPerShape; l < (i + 1) * particlesPerShape; l ++) {
+                //
+                //     vec2 ii = vec2(float(l % tSize) + 0.5, (floor(float(l) / textureSize)) + 0.5) / textureSize;
+                //     vec3 c_position = texture(uPositions, ii).rgb;
+                //
+                //     vec3 c_dist = position - c_position;
+                //     d = length(c_dist);
+                //
+                //     if(d < 2. * radius) {
+                //         position += radius * normalize(c_dist);
+                //     }
+                //
+                // }
 
             }
 
