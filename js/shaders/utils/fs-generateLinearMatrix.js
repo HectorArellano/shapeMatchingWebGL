@@ -39,7 +39,7 @@ void main() {
      Using Babylonian method to evaluate the square root.
      */
 
-    for(int i = 0; i < 20; i ++) {
+    for(int i = 0; i < 40; i ++) {
 
         Si = 0.5 * (Si + S * inverse(Si));
 
@@ -51,7 +51,7 @@ void main() {
     mat3 A = Apq * inverse(Aqq);
     A = pow(determinant(A), 1./ 4.) * A;
 
-    float beta = 0.2;
+    float beta = 0.3;
     A = beta * A + (1. - beta) * R;
 
     data1 = vec4(A[0], uShapeId);

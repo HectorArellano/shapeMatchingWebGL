@@ -22,7 +22,7 @@ import {vsRenderBGSphere}       from './shaders/utils/vs-renderBGSphere.js';
 //=======================================================================================================
 
 let canvas = document.querySelector("#canvas3D");
-canvas.height = 700;
+canvas.height = 900;
 canvas.width = canvas.height;
 canvas.style.width = String(canvas.width) + "px";
 canvas.style.height = String(canvas.height) + "px";
@@ -45,7 +45,7 @@ let shapeInfo = [];
 
 
 const voxelResolution = 64;
-const iterations = 4;
+const iterations = 5;
 const deltaTime = 0.1;
 
 let latitudeBands = 30;
@@ -123,11 +123,14 @@ function generateSphere(radius, center, stiffness) {
 
 
 //Generate the soft body spheres
-generateSphere(6, {x: 32, y: 32, z: 5}, 1);
-generateSphere(6, {x: 32, y: 32, z: 20}, 0.7);
-generateSphere(6, {x: 32, y: 32, z: 35}, 0.5);
-generateSphere(6, {x: 32, y: 32, z: 50}, 0.3);
-generateSphere(6, {x: 32, y: 32, z: 65}, 0.05);
+generateSphere(8, {x: 32, y: 32, z: 12}, 1);
+generateSphere(8, {x: 32, y: 32, z: 32}, 0.05);
+generateSphere(8, {x: 32, y: 32, z: 52}, 0.05);
+generateSphere(8, {x: 32, y: 54, z: 32}, 0.05);
+generateSphere(8, {x: 32, y: 10, z: 32}, 1);
+
+
+console.log(shapeInfo);
 
 
 let borderSphereIndexes = webGL2.createBuffer(indexParticles, true);
@@ -290,6 +293,8 @@ let collisionsProgram =                         webGL2.generateProgram(vsCollisi
 collisionsProgram.positions =                   gl.getUniformLocation(collisionsProgram, "uPositions");
 collisionsProgram.prevPositions =               gl.getUniformLocation(collisionsProgram, "uPrevPositions");
 collisionsProgram.voxelResolution =             gl.getUniformLocation(collisionsProgram, "uVoxelResolution");
+collisionsProgram.shapesInfo =                  gl.getUniformLocation(collisionsProgram, "uShapesInfo");
+collisionsProgram.centerOfMass =                gl.getUniformLocation(collisionsProgram, "uCenterOfMass");
 
 
 let generateLinearMatrixProgram =               webGL2.generateProgram(vsQuad, fsGenerateLinearMatrix);
@@ -424,6 +429,7 @@ let render = () => {
 
     for(let i = 0; i < iterations; i ++) {
 
+
         //Evaluate the collisions for the particles
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, collisionsFB);
         gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
@@ -431,6 +437,8 @@ let render = () => {
         gl.uniform1f(collisionsProgram.voxelResolution, voxelResolution);
         webGL2.bindTexture(collisionsProgram.positions, iterationsTextureA, 0);
         webGL2.bindTexture(collisionsProgram.prevPositions, positionsTexture, 1);
+        webGL2.bindTexture(collisionsProgram.centerOfMass, centerOfMassTexture, 2);
+        webGL2.bindTexture(collisionsProgram.shapesInfo, shapeInfoTexture, 3);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.POINTS, 0, totalParticles);
 
@@ -439,6 +447,7 @@ let render = () => {
         for(let q = 1; q <= amountOfShapes; q ++) {
             calculateSums(iterationsTextureB, centerOfMassFB, q);
         }
+
 
         //Calculate the relative positions for the current frame with the current center of mass
         calculateRelativePositions(centerOfMassTexture, relativePositionFramebuffer);
@@ -506,6 +515,9 @@ let render = () => {
     gl.viewport(0, 0, canvas.height, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
+//    gl.enable(gl.BLEND);
+
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
 
     //Render the container sphere
@@ -529,6 +541,8 @@ let render = () => {
     gl.uniformMatrix4fv(renderParticlesProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
     gl.drawArrays(gl.POINTS, 0, totalParticles);
     gl.disable(gl.DEPTH_TEST);
+//    gl.disable(gl.BLEND);
+
 
 
 

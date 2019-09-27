@@ -9,8 +9,8 @@ class Camera {
         this.currentMouseX = 0;
         this.currentMouseY = 0;
 
-        this.alpha = 1 * Math.PI * 0.5;
-        this.beta = .5 * Math.PI;
+        this.alpha = 1 * Math.PI * 0.3;
+        this.beta = 1.2 * Math.PI;
         this._alpha = this.alpha;
         this._beta = this.beta;
         this.ratio = 1;
