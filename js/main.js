@@ -22,8 +22,8 @@ import {vsRenderBGSphere}       from './shaders/utils/vs-renderBGSphere.js';
 //=======================================================================================================
 
 let canvas = document.querySelector("#canvas3D");
-canvas.height = 700;
-canvas.width = canvas.height;
+canvas.height = window.innerHeight
+canvas.width = window.innerWidth;
 canvas.style.width = String(canvas.width) + "px";
 canvas.style.height = String(canvas.height) + "px";
 webGL2.setContext(canvas);
@@ -401,7 +401,7 @@ let render = () => {
 
     requestAnimationFrame(render);
 
-    camera.updateCamera(FOV, 1, cameraDistance);
+    camera.updateCamera(FOV, canvas.width/canvas.height, cameraDistance);
     let acceleration = {
         x: 0 * Math.sin(currentFrame * Math.PI / 180),
         y: -10,
@@ -503,7 +503,7 @@ let render = () => {
 
 
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
-    gl.viewport(0, 0, canvas.height, canvas.height);
+    gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
 
