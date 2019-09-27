@@ -55,8 +55,6 @@ let amountOfShapes = 0;
 function generateSphere(radius, center, shapeId) {
 
     let partialParticles = 0;
-    amountOfShapes ++;
-
 
 //    for (let i = 0; i < voxelResolution; i++) {
 //        for (let j = 0; j < voxelResolution; j++) {
@@ -76,6 +74,23 @@ function generateSphere(radius, center, shapeId) {
 //            }
 //        }
 //    }
+
+    for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+        for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+            let first = (latNumber * (longitudeBands + 1)) + longNumber;
+            let second = first + longitudeBands + 1;
+
+            indexParticles.push(first + totalParticles);
+            indexParticles.push(second + totalParticles);
+            indexParticles.push(first + 1 + totalParticles);
+
+            indexParticles.push(second + totalParticles);
+            indexParticles.push(second + 1 + totalParticles);
+            indexParticles.push(first + 1 + totalParticles);
+            totalIndexes +=6;
+        }
+    }
+
 
     for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
         let theta =  latNumber * Math.PI / latitudeBands;
@@ -100,22 +115,8 @@ function generateSphere(radius, center, shapeId) {
 
     particlesPerShape.push(partialParticles);
 
+    amountOfShapes ++;
 
-    for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
-        for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
-            let first = (latNumber * (longitudeBands + 1)) + longNumber;
-            let second = first + longitudeBands + 1;
-
-            indexParticles.push(first);
-            indexParticles.push(second);
-            indexParticles.push(first + 1);
-
-            indexParticles.push(second);
-            indexParticles.push(second + 1);
-            indexParticles.push(first + 1);
-            totalIndexes +=6;
-        }
-    }
 }
 
 //Generate the soft body spheres
@@ -124,7 +125,7 @@ generateSphere(8, {x: 32, y: 42, z: 47}, 2);
 generateSphere(10, {x: 17, y: 32, z: 32}, 3);
 
 
-//let borderSphereIndexes = webGL2.createBuffer(indexParticles, true);
+let borderSphereIndexes = webGL2.createBuffer(indexParticles, true);
 
 
 ////Generate information for the containing sphere
@@ -501,16 +502,16 @@ let render = () => {
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.height, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-//    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.DEPTH_TEST);
 
 
     //Render the container sphere
-//    gl.useProgram(renderBGSphereProgram);
-//    webGL2.bindTexture(renderBGSphereProgram.positionTexture, positionsTexture, 0);
-//    gl.uniformMatrix4fv(renderBGSphereProgram.cameraMatrix, false, camera.cameraTransformMatrix);
-//    gl.uniformMatrix4fv(renderBGSphereProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
-//    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, borderSphereIndexes);
-//    gl.drawElements(gl.TRIANGLES, totalIndexes, gl.UNSIGNED_SHORT, 0);
+    gl.useProgram(renderBGSphereProgram);
+    webGL2.bindTexture(renderBGSphereProgram.positionTexture, positionsTexture, 0);
+    gl.uniformMatrix4fv(renderBGSphereProgram.cameraMatrix, false, camera.cameraTransformMatrix);
+    gl.uniformMatrix4fv(renderBGSphereProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, borderSphereIndexes);
+    gl.drawElements(gl.TRIANGLES, totalIndexes, gl.UNSIGNED_SHORT, 0);
 
 
 
@@ -524,7 +525,7 @@ let render = () => {
     gl.uniformMatrix4fv(renderParticlesProgram.cameraMatrix, false, camera.cameraTransformMatrix);
     gl.uniformMatrix4fv(renderParticlesProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
     gl.drawArrays(gl.POINTS, 0, totalParticles);
-//    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.DEPTH_TEST);
 
 
 
