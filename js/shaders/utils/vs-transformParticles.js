@@ -9,7 +9,7 @@ uniform sampler2D uCenterOfMass;
 uniform sampler2D uLinearMatrix0;
 uniform sampler2D uLinearMatrix1;
 uniform sampler2D uLinearMatrix2;
-uniform sampler2D uParticlesPerShape;
+uniform sampler2D uShapesInfo;
 uniform float uStiffness;
 
 out vec4 colorData;
@@ -32,11 +32,13 @@ void main() {
 
     initialRelativePosition = linearMatrix * initialRelativePosition;
 
-    float particlesPerShape = texelFetch(uParticlesPerShape, ivec2(shapeId, 0), 0).r;
+    float particlesPerShape = texelFetch(uShapesInfo, ivec2(shapeId * 3, 0), 0).r;
 
     vec3 centerOfMass = texelFetch(uCenterOfMass, ivec2(shapeId, 0), 0).rgb / particlesPerShape;
 
-    position += uStiffness * (initialRelativePosition + centerOfMass - position);
+    float stiffness = texelFetch(uShapesInfo, ivec2(shapeId * 3 + 2, 0), 0).r;
+
+    position += stiffness * (initialRelativePosition + centerOfMass - position);
 
     gl_Position = vec4(2. * index - vec2(1.), 0., 1.);
     gl_PointSize = 1.;

@@ -4,7 +4,7 @@ uniform mat4 uPMatrix;
 
 uniform sampler2D uTexturePosition;
 uniform sampler2D uCenterOfMass;
-uniform sampler2D uParticlesPerShape;
+uniform sampler2D uShapesInfo;
 uniform float uScale;
 uniform vec3 uBucketData;
 out vec4 colorData;
@@ -17,7 +17,8 @@ void main() {
 
     vec4 positionData = texture(uTexturePosition, index);
 
-    float particlesPerShape = texelFetch(uParticlesPerShape, ivec2(int(positionData.a) - 1, 0), 0).r;
+    float particlesPerShape = texelFetch(uShapesInfo, ivec2(3 * (int(positionData.a) - 1), 0), 0).r;
+
     vec3 centerOfMass = texelFetch(uCenterOfMass, ivec2(int(positionData.a) - 1, 0), 0).rgb / particlesPerShape;
 
     //Positions are in the [0, 128) range, the division normalizes to the space [0 - 1).

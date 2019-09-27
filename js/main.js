@@ -22,7 +22,7 @@ import {vsRenderBGSphere}       from './shaders/utils/vs-renderBGSphere.js';
 //=======================================================================================================
 
 let canvas = document.querySelector("#canvas3D");
-canvas.height = 1000;
+canvas.height = 700;
 canvas.width = canvas.height;
 canvas.style.width = String(canvas.width) + "px";
 canvas.style.height = String(canvas.height) + "px";
@@ -41,18 +41,21 @@ let currentFrame = 0;
 let totalParticles = 0;
 let totalIndexes = 0;
 let indexParticles = [];
-let particlesPerShape = [];
+let shapeInfo = [];
+
+
 const voxelResolution = 64;
-const stiffness = 0.99;
-const iterations = 6;
+const iterations = 4;
 const deltaTime = 0.1;
 
-let latitudeBands = 20;
-let longitudeBands = 20;
+let latitudeBands = 30;
+let longitudeBands = 30;
 let amountOfShapes = 0;
 
 
-function generateSphere(radius, center, shapeId) {
+function generateSphere(radius, center, stiffness) {
+
+    amountOfShapes ++;
 
     let partialParticles = 0;
 
@@ -106,23 +109,25 @@ function generateSphere(radius, center, shapeId) {
             let y = radius * cosTheta + center.y;
             let z = radius * sinPhi * sinTheta + center.z;
 
-            particlesPosition.push(x, y, z, shapeId);
+            particlesPosition.push(x, y, z, amountOfShapes);
             particlesVelocity.push(0, 0, 0, 0);
             totalParticles ++;
             partialParticles++;
         }
     }
 
-    particlesPerShape.push(partialParticles);
-
-    amountOfShapes ++;
+    //This is for the shape information
+    shapeInfo.push(partialParticles, radius, stiffness);
 
 }
 
+
 //Generate the soft body spheres
-generateSphere(8, {x: 32, y: 32, z: 15}, 1);
-generateSphere(8, {x: 32, y: 42, z: 47}, 2);
-generateSphere(10, {x: 17, y: 32, z: 32}, 3);
+generateSphere(6, {x: 32, y: 32, z: 5}, 1);
+generateSphere(6, {x: 32, y: 32, z: 20}, 0.7);
+generateSphere(6, {x: 32, y: 32, z: 35}, 0.5);
+generateSphere(6, {x: 32, y: 32, z: 50}, 0.3);
+generateSphere(6, {x: 32, y: 32, z: 65}, 0.05);
 
 
 let borderSphereIndexes = webGL2.createBuffer(indexParticles, true);
@@ -163,8 +168,6 @@ console.log("the total particles are: " + totalParticles);
 //Define the particles texture size based on the particles used, texture is defined as a power of 2
 particlesTextureSize = Math.pow(2, Math.ceil(Math.log(Math.sqrt(totalParticles)) / Math.log(2)));
 
-console.log("the texture size is: " + particlesTextureSize);
-
 
 //This fills the rest of buffer to generate the texture
 for(let i = totalParticles; i < particlesTextureSize * particlesTextureSize; i ++) {
@@ -192,7 +195,9 @@ let collisionsFB =                          webGL2.createDrawFramebuffer([iterat
 
 
 //Shape information
-let particlesPerShapeTexture =              webGL2.createTexture2D(amountOfShapes, 1, gl.R32F, gl.RED, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPerShape));
+let shapeInfoTexture =                      webGL2.createTexture2D(amountOfShapes * 3, 1, gl.R32F, gl.RED, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(shapeInfo));
+
+
 let initialCenterOfMassTexture =            webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT);
 let initialCenterOfMassFB =                 webGL2.createDrawFramebuffer(initialCenterOfMassTexture);
 
@@ -240,7 +245,7 @@ for (let i = 0; i < Math.ceil(Math.log(particlesTextureSize) / Math.log(2)); i++
 let renderParticlesProgram =                    webGL2.generateProgram(vsParticles, fsColor);
 renderParticlesProgram.positionTexture =        gl.getUniformLocation(renderParticlesProgram, "uTexturePosition");
 renderParticlesProgram.centerOfMass =           gl.getUniformLocation(renderParticlesProgram, "uCenterOfMass");
-renderParticlesProgram.particlesPerShape =      gl.getUniformLocation(renderParticlesProgram, "uParticlesPerShape");
+renderParticlesProgram.shapesInfo =             gl.getUniformLocation(renderParticlesProgram, "uShapesInfo");
 renderParticlesProgram.cameraMatrix =           gl.getUniformLocation(renderParticlesProgram, "uCameraMatrix");
 renderParticlesProgram.perspectiveMatrix =      gl.getUniformLocation(renderParticlesProgram, "uPMatrix");
 renderParticlesProgram.scale =                  gl.getUniformLocation(renderParticlesProgram, "uScale");
@@ -260,7 +265,7 @@ calculateSumsProgram.shapeId =                  gl.getUniformLocation(calculateS
 let relativePositionProgram =                   webGL2.generateProgram(vsRelativePosition, fsColor);
 relativePositionProgram.positions =             gl.getUniformLocation(relativePositionProgram, "uPositions");
 relativePositionProgram.centerOfMass =          gl.getUniformLocation(relativePositionProgram, "uCenterOfMass");
-relativePositionProgram.particlesPerShape =     gl.getUniformLocation(relativePositionProgram, "uParticlesPerShape");
+relativePositionProgram.shapesInfo =            gl.getUniformLocation(relativePositionProgram, "uShapesInfo");
 
 
 let generateMatrixProgram =                     webGL2.generateProgram(vsQuad, fsGenerateMatrix);
@@ -304,8 +309,7 @@ transformParticlesProgram.centerOfMass =        gl.getUniformLocation(transformP
 transformParticlesProgram.linearMatrix0 =       gl.getUniformLocation(transformParticlesProgram, "uLinearMatrix0");
 transformParticlesProgram.linearMatrix1 =       gl.getUniformLocation(transformParticlesProgram, "uLinearMatrix1");
 transformParticlesProgram.linearMatrix2 =       gl.getUniformLocation(transformParticlesProgram, "uLinearMatrix2");
-transformParticlesProgram.stiffness =           gl.getUniformLocation(transformParticlesProgram, "uStiffness");
-transformParticlesProgram.particlesPerShape =   gl.getUniformLocation(transformParticlesProgram, "uParticlesPerShape");
+transformParticlesProgram.shapesInfo =          gl.getUniformLocation(transformParticlesProgram, "uShapesInfo");
 
 
 
@@ -344,7 +348,7 @@ let calculateRelativePositions = (centerOfMassTexture, outputFramebuffer) => {
     gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
     webGL2.bindTexture(relativePositionProgram.positions, iterationsTextureB, 0);
     webGL2.bindTexture(relativePositionProgram.centerOfMass, centerOfMassTexture, 1);
-    webGL2.bindTexture(relativePositionProgram.particlesPerShape, particlesPerShapeTexture, 2);
+    webGL2.bindTexture(relativePositionProgram.shapesInfo, shapeInfoTexture, 2);
     gl.drawArrays(gl.POINTS, 0, totalParticles);
 }
 
@@ -464,14 +468,13 @@ let render = () => {
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, iterationsAfb);
         gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
         gl.useProgram(transformParticlesProgram);
-        gl.uniform1f(transformParticlesProgram.stiffness, stiffness);
         webGL2.bindTexture(transformParticlesProgram.positions, iterationsTextureB, 0);
         webGL2.bindTexture(transformParticlesProgram.relPositions, initialRelativePositionTexture, 1);
         webGL2.bindTexture(transformParticlesProgram.centerOfMass, centerOfMassTexture, 2);
         webGL2.bindTexture(transformParticlesProgram.linearMatrix0, linearMatrixTexture0, 3);
         webGL2.bindTexture(transformParticlesProgram.linearMatrix1, linearMatrixTexture1, 4);
         webGL2.bindTexture(transformParticlesProgram.linearMatrix2, linearMatrixTexture2, 5);
-        webGL2.bindTexture(transformParticlesProgram.particlesPerShape, particlesPerShapeTexture, 6);
+        webGL2.bindTexture(transformParticlesProgram.shapesInfo, shapeInfoTexture, 6);
 
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.POINTS, 0, totalParticles);
@@ -520,7 +523,7 @@ let render = () => {
     gl.useProgram(renderParticlesProgram);
     webGL2.bindTexture(renderParticlesProgram.positionTexture, relativePositionTexture, 0);
     webGL2.bindTexture(renderParticlesProgram.centerOfMass, centerOfMassTexture, 1);
-    webGL2.bindTexture(renderParticlesProgram.particlesPerShape, particlesPerShapeTexture, 2);
+    webGL2.bindTexture(renderParticlesProgram.shapesInfo, shapeInfoTexture, 2);
     gl.uniform1f(renderParticlesProgram.scale, voxelResolution);
     gl.uniformMatrix4fv(renderParticlesProgram.cameraMatrix, false, camera.cameraTransformMatrix);
     gl.uniformMatrix4fv(renderParticlesProgram.perspectiveMatrix, false, camera.perspectiveMatrix);

@@ -21,17 +21,20 @@ void main() {
     vec3 prevPosition = texture(uPrevPositions, index).rgb;
 
 
-    //Collision against a sphere border
-    vec3 center = vec3(uVoxelResolution * 0.5);
-    float radius = uVoxelResolution * 0.48;
-    vec3 normal = position - center;
-    float n = length(normal);
-    float distance = n -  radius;
+//    //Collision against a sphere border
+//    vec3 center = vec3(uVoxelResolution * 0.5);
+//    float radius = uVoxelResolution * 0.48;
+//    vec3 normal = position - center;
+//    float n = length(normal);
+//    float distance = n -  radius;
 
-    if(distance > 0. ) {
+    float distance = position.y;
+    vec3 normal = vec3(0., 0., 1.);
 
-        normal = normalize(normal);
-        colorData1 = vec4(center + normal * radius, positionData.a);
+    if(distance < 0. ) {
+
+        position.y = 0.;
+        colorData1 = vec4(position, positionData.a);
         colorData2 = colorData1;
 
     } else {
