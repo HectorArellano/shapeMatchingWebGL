@@ -44,13 +44,14 @@ let indexParticles = [];
 let shapeInfo = [];
 
 
-const voxelResolution = 64;
-const iterations = 5;
+const voxelResolution = 100;
+const iterations = 3;
 const deltaTime = 0.1;
 
 let latitudeBands = 30;
 let longitudeBands = 30;
 let amountOfShapes = 0;
+let simulate = true;
 
 
 function generateSphere(radius, center, stiffness) {
@@ -123,12 +124,15 @@ function generateSphere(radius, center, stiffness) {
 
 
 //Generate the soft body spheres
-generateSphere(8, {x: 32, y: 32, z: 12}, 1);
-generateSphere(8, {x: 32, y: 32, z: 32}, 0.05);
-generateSphere(8, {x: 32, y: 32, z: 52}, 0.05);
-generateSphere(8, {x: 32, y: 54, z: 32}, 0.05);
-generateSphere(8, {x: 32, y: 10, z: 32}, 1);
 
+let r = 20;
+for(let x = 1; x <= 1; x ++) {
+    for(let y = -1; y <= 1; y ++) {
+        for(let z = -1; z <= 1; z ++) {
+            generateSphere(r * 0.4, {x: 50 + x * r + 2. * Math.random(), y: 50 + y * r + 2. * Math.random(), z: 50 + z * r + 2. * Math.random()}, 0.2);
+        }
+    }
+}
 
 console.log(shapeInfo);
 
@@ -414,108 +418,109 @@ let render = () => {
     }
 
 
-    //Apply external forces (gravity)
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, iterationsAfb);
-    gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
-    gl.useProgram(predictPositionsProgram);
-    gl.uniform1f(predictPositionsProgram.deltaTime, deltaTime);
-    gl.uniform3f(predictPositionsProgram.acceleration, 0, -10, 0);
-    webGL2.bindTexture(predictPositionsProgram.positionTexture, positionsTexture, 0);
-    webGL2.bindTexture(predictPositionsProgram.velocityTexture, velocityTexture, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.POINTS, 0, totalParticles);
-
-
-
-    for(let i = 0; i < iterations; i ++) {
-
-
-        //Evaluate the collisions for the particles
-        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, collisionsFB);
-        gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
-        gl.useProgram(collisionsProgram);
-        gl.uniform1f(collisionsProgram.voxelResolution, voxelResolution);
-        webGL2.bindTexture(collisionsProgram.positions, iterationsTextureA, 0);
-        webGL2.bindTexture(collisionsProgram.prevPositions, positionsTexture, 1);
-        webGL2.bindTexture(collisionsProgram.centerOfMass, centerOfMassTexture, 2);
-        webGL2.bindTexture(collisionsProgram.shapesInfo, shapeInfoTexture, 3);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.POINTS, 0, totalParticles);
-
-
-        //Calculate the center of mass for the current frame
-        for(let q = 1; q <= amountOfShapes; q ++) {
-            calculateSums(iterationsTextureB, centerOfMassFB, q);
-        }
-
-
-        //Calculate the relative positions for the current frame with the current center of mass
-        calculateRelativePositions(centerOfMassTexture, relativePositionFramebuffer);
-
-
-        //Start the calculation of the Apq matrix
-        startMatrixApq(relativePositionTexture, initialRelativePositionTexture, [ApqFB0, ApqFB1, ApqFB2]);
-
-
-        //Calculate the linear matrix
-        for(let q = 0; q < amountOfShapes; q ++) {
-            gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, linearMatrixFB);
-            gl.viewport(q, 0, 1, 1);
-            gl.useProgram(generateLinearMatrixProgram);
-            gl.uniform1i(generateLinearMatrixProgram.shapeId, q);
-            webGL2.bindTexture(generateLinearMatrixProgram.Aqq0, AqqTexture0, 0);
-            webGL2.bindTexture(generateLinearMatrixProgram.Aqq1, AqqTexture1, 1);
-            webGL2.bindTexture(generateLinearMatrixProgram.Aqq2, AqqTexture2, 2);
-            webGL2.bindTexture(generateLinearMatrixProgram.Apq0, ApqTexture0, 3);
-            webGL2.bindTexture(generateLinearMatrixProgram.Apq1, ApqTexture1, 4);
-            webGL2.bindTexture(generateLinearMatrixProgram.Apq2, ApqTexture2, 5);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        }
-
-
-        //Transform the positions using the previous linear matrix
+    if(simulate) {
+        //Apply external forces (gravity)
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, iterationsAfb);
         gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
-        gl.useProgram(transformParticlesProgram);
-        webGL2.bindTexture(transformParticlesProgram.positions, iterationsTextureB, 0);
-        webGL2.bindTexture(transformParticlesProgram.relPositions, initialRelativePositionTexture, 1);
-        webGL2.bindTexture(transformParticlesProgram.centerOfMass, centerOfMassTexture, 2);
-        webGL2.bindTexture(transformParticlesProgram.linearMatrix0, linearMatrixTexture0, 3);
-        webGL2.bindTexture(transformParticlesProgram.linearMatrix1, linearMatrixTexture1, 4);
-        webGL2.bindTexture(transformParticlesProgram.linearMatrix2, linearMatrixTexture2, 5);
-        webGL2.bindTexture(transformParticlesProgram.shapesInfo, shapeInfoTexture, 6);
-
+        gl.useProgram(predictPositionsProgram);
+        gl.uniform1f(predictPositionsProgram.deltaTime, deltaTime);
+        gl.uniform3f(predictPositionsProgram.acceleration, 0, -10, 0);
+        webGL2.bindTexture(predictPositionsProgram.positionTexture, positionsTexture, 0);
+        webGL2.bindTexture(predictPositionsProgram.velocityTexture, velocityTexture, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.POINTS, 0, totalParticles);
 
+
+        for (let i = 0; i < iterations; i++) {
+
+
+            //Evaluate the collisions for the particles
+            gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, collisionsFB);
+            gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
+            gl.useProgram(collisionsProgram);
+            gl.uniform1f(collisionsProgram.voxelResolution, voxelResolution);
+            webGL2.bindTexture(collisionsProgram.positions, iterationsTextureA, 0);
+            webGL2.bindTexture(collisionsProgram.prevPositions, positionsTexture, 1);
+            webGL2.bindTexture(collisionsProgram.centerOfMass, centerOfMassTexture, 2);
+            webGL2.bindTexture(collisionsProgram.shapesInfo, shapeInfoTexture, 3);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawArrays(gl.POINTS, 0, totalParticles);
+
+
+            //Calculate the center of mass for the current frame
+            for (let q = 1; q <= amountOfShapes; q++) {
+                calculateSums(iterationsTextureB, centerOfMassFB, q);
+            }
+
+
+            //Calculate the relative positions for the current frame with the current center of mass
+            calculateRelativePositions(centerOfMassTexture, relativePositionFramebuffer);
+
+
+            //Start the calculation of the Apq matrix
+            startMatrixApq(relativePositionTexture, initialRelativePositionTexture, [ApqFB0, ApqFB1, ApqFB2]);
+
+
+            //Calculate the linear matrix
+            for (let q = 0; q < amountOfShapes; q++) {
+                gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, linearMatrixFB);
+                gl.viewport(q, 0, 1, 1);
+                gl.useProgram(generateLinearMatrixProgram);
+                gl.uniform1i(generateLinearMatrixProgram.shapeId, q);
+                webGL2.bindTexture(generateLinearMatrixProgram.Aqq0, AqqTexture0, 0);
+                webGL2.bindTexture(generateLinearMatrixProgram.Aqq1, AqqTexture1, 1);
+                webGL2.bindTexture(generateLinearMatrixProgram.Aqq2, AqqTexture2, 2);
+                webGL2.bindTexture(generateLinearMatrixProgram.Apq0, ApqTexture0, 3);
+                webGL2.bindTexture(generateLinearMatrixProgram.Apq1, ApqTexture1, 4);
+                webGL2.bindTexture(generateLinearMatrixProgram.Apq2, ApqTexture2, 5);
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            }
+
+
+            //Transform the positions using the previous linear matrix
+            gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, iterationsAfb);
+            gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
+            gl.useProgram(transformParticlesProgram);
+            webGL2.bindTexture(transformParticlesProgram.positions, iterationsTextureB, 0);
+            webGL2.bindTexture(transformParticlesProgram.relPositions, initialRelativePositionTexture, 1);
+            webGL2.bindTexture(transformParticlesProgram.centerOfMass, centerOfMassTexture, 2);
+            webGL2.bindTexture(transformParticlesProgram.linearMatrix0, linearMatrixTexture0, 3);
+            webGL2.bindTexture(transformParticlesProgram.linearMatrix1, linearMatrixTexture1, 4);
+            webGL2.bindTexture(transformParticlesProgram.linearMatrix2, linearMatrixTexture2, 5);
+            webGL2.bindTexture(transformParticlesProgram.shapesInfo, shapeInfoTexture, 6);
+
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawArrays(gl.POINTS, 0, totalParticles);
+
+        }
+
+
+        //Update the velocity
+        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, velocityFB);
+        gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
+        gl.useProgram(updateVelocityProgram);
+        gl.uniform1f(updateVelocityProgram.deltaTime, deltaTime);
+        webGL2.bindTexture(updateVelocityProgram.position, iterationsTextureA, 0);
+        webGL2.bindTexture(updateVelocityProgram.positionOld, prevPositionsTexture, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.POINTS, 0, totalParticles);
+
+
+        //Update the positions.
+        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, positionsFB);
+        gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
+        gl.useProgram(textureProgram);
+        webGL2.bindTexture(textureProgram.texture, iterationsTextureA, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
-
-
-    //Update the velocity
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, velocityFB);
-    gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
-    gl.useProgram(updateVelocityProgram);
-    gl.uniform1f(updateVelocityProgram.deltaTime, deltaTime);
-    webGL2.bindTexture(updateVelocityProgram.position, iterationsTextureA, 0);
-    webGL2.bindTexture(updateVelocityProgram.positionOld, prevPositionsTexture, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.POINTS, 0, totalParticles);
-
-
-    //Update the positions.
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, positionsFB);
-    gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
-    gl.useProgram(textureProgram);
-    webGL2.bindTexture(textureProgram.texture, iterationsTextureA, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
 
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-//    gl.enable(gl.DEPTH_TEST);
-    gl.enable(gl.BLEND);
+    gl.enable(gl.DEPTH_TEST);
+//    gl.enable(gl.BLEND);
 
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -533,7 +538,7 @@ let render = () => {
 
     //Render the particles from the soft body
     gl.useProgram(renderParticlesProgram);
-    webGL2.bindTexture(renderParticlesProgram.positionTexture, relativePositionTexture, 0);
+    webGL2.bindTexture(renderParticlesProgram.positionTexture, positionsTexture, 0);
     webGL2.bindTexture(renderParticlesProgram.centerOfMass, centerOfMassTexture, 1);
     webGL2.bindTexture(renderParticlesProgram.shapesInfo, shapeInfoTexture, 2);
     gl.uniform1f(renderParticlesProgram.scale, voxelResolution);

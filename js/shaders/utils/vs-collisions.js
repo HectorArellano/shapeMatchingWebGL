@@ -44,7 +44,6 @@ void main() {
 
                 position = centerOfMass + normalize(n3) * c_shapeRadius;
                 prevPosition = position;
-
             }
 
         }
@@ -56,15 +55,14 @@ void main() {
     float radius = uVoxelResolution * 0.5;
     vec3 normal = position - center;
     float n = length(normal);
-    float distance = n -  radius;
+//    float distance = n -  radius;
 
-//    float distance = position.y;
-//    vec3 normal = vec3(0., 0., 1.);
+    float distance = position.y;
 
-    if(distance > 0. ) {
+    if(distance < 0. ) {
 
-//        position.y = 0.;
-        position = center + normalize(normal) * radius;
+        position.y = 0.;
+//        position = center + normalize(normal) * radius;
         prevPosition = position;
 
     }

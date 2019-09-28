@@ -22,7 +22,7 @@ void main() {
     vec3 centerOfMass = texelFetch(uCenterOfMass, ivec2(int(positionData.a) - 1, 0), 0).rgb / particlesPerShape;
 
     //Positions are in the [0, 128) range, the division normalizes to the space [0 - 1).
-    vec3 spacePosition = positionData.rgb + centerOfMass;
+    vec3 spacePosition = positionData.rgb;
 
     vec3 position = spacePosition / uScale;
 
