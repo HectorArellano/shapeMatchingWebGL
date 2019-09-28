@@ -48,8 +48,8 @@ const voxelResolution = 100;
 const iterations = 3;
 const deltaTime = 0.1;
 
-let latitudeBands = 30;
-let longitudeBands = 30;
+let latitudeBands = 20;
+let longitudeBands = 20;
 let amountOfShapes = 0;
 let simulate = true;
 
@@ -127,9 +127,9 @@ function generateSphere(radius, center, stiffness) {
 
 let r = 20;
 for(let x = 1; x <= 1; x ++) {
-    for(let y = -1; y <= 1; y ++) {
+    for(let y = -2; y <= 1; y ++) {
         for(let z = -1; z <= 1; z ++) {
-            generateSphere(r * 0.4, {x: 50 + x * r + 2. * Math.random(), y: 50 + y * r + 2. * Math.random(), z: 50 + z * r + 2. * Math.random()}, 0.2);
+            generateSphere(r * 0.4, {x: 50 + x * r + 2. * Math.random(), y: 50 + y * r + 2. * Math.random(), z: 50 + z * r + 2. * Math.random()}, 0.15);
         }
     }
 }
