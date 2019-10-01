@@ -45,13 +45,133 @@ let shapeInfo = [];
 
 
 const voxelResolution = 100;
-const iterations = 3;
-const deltaTime = 0.1;
+const iterations = 10;
+const deltaTime = 0.05;
 
-let latitudeBands = 20;
-let longitudeBands = 20;
+let latitudeBands = 5;
+let longitudeBands = 5;
 let amountOfShapes = 0;
 let simulate = true;
+
+
+function generateBox(side, center, stiffness) {
+
+    amountOfShapes ++;
+
+    let partialParticles = 0;
+
+    for(let u = 0; u < 2; u ++) {
+        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+                let second = first + longitudeBands + 1;
+
+                indexParticles.push(first + totalParticles);
+                indexParticles.push(second + totalParticles);
+                indexParticles.push(first + 1 + totalParticles);
+
+                indexParticles.push(second + totalParticles);
+                indexParticles.push(second + 1 + totalParticles);
+                indexParticles.push(first + 1 + totalParticles);
+                totalIndexes += 6;
+            }
+        }
+
+
+        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+            let aa = side * latNumber / latitudeBands;
+
+            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+                let bb = side * longNumber / longitudeBands;
+
+                let x = aa - 0.5 * side + center.x;
+                let y = bb - 0.5 * side + center.y;
+                let z = 0.5 * side * (-1 + 2 * u) + center.z;
+
+                particlesPosition.push(x, y, z, amountOfShapes);
+                particlesVelocity.push(0, 0, 0, 0);
+                totalParticles++;
+                partialParticles++;
+            }
+        }
+    }
+
+    for(let u = 0; u < 2; u ++) {
+        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+                let second = first + longitudeBands + 1;
+
+                indexParticles.push(first + totalParticles);
+                indexParticles.push(second + totalParticles);
+                indexParticles.push(first + 1 + totalParticles);
+
+                indexParticles.push(second + totalParticles);
+                indexParticles.push(second + 1 + totalParticles);
+                indexParticles.push(first + 1 + totalParticles);
+                totalIndexes += 6;
+            }
+        }
+
+
+        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+            let aa = side * latNumber / latitudeBands;
+
+            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+                let bb = side * longNumber / longitudeBands;
+
+                let y = aa - 0.5 * side + center.y;
+                let z = bb - 0.5 * side + center.z;
+                let x = 0.5 * side * (-1 + 2 * u) + center.x;
+
+                particlesPosition.push(x, y, z, amountOfShapes);
+                particlesVelocity.push(0, 0, 0, 0);
+                totalParticles++;
+                partialParticles++;
+            }
+        }
+    }
+
+    for(let u = 0; u < 2; u ++) {
+        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+                let second = first + longitudeBands + 1;
+
+                indexParticles.push(first + totalParticles);
+                indexParticles.push(second + totalParticles);
+                indexParticles.push(first + 1 + totalParticles);
+
+                indexParticles.push(second + totalParticles);
+                indexParticles.push(second + 1 + totalParticles);
+                indexParticles.push(first + 1 + totalParticles);
+                totalIndexes += 6;
+            }
+        }
+
+
+        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+            let aa = side * latNumber / latitudeBands;
+
+            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+                let bb = side * longNumber / longitudeBands;
+
+                let x = aa - 0.5 * side + center.x;
+                let z = bb - 0.5 * side + center.z;
+                let y = 0.5 * side * (-1 + 2 * u) + center.y;
+
+                particlesPosition.push(x, y, z, amountOfShapes);
+                particlesVelocity.push(0, 0, 0, 0);
+                totalParticles++;
+                partialParticles++;
+            }
+        }
+    }
+
+    //This is for the shape information
+    shapeInfo.push(partialParticles, side, stiffness);
+
+}
 
 
 function generateSphere(radius, center, stiffness) {
@@ -59,25 +179,6 @@ function generateSphere(radius, center, stiffness) {
     amountOfShapes ++;
 
     let partialParticles = 0;
-
-//    for (let i = 0; i < voxelResolution; i++) {
-//        for (let j = 0; j < voxelResolution; j++) {
-//            for (let k = 0; k < voxelResolution; k++) {
-//
-//                //Condition for the particle position and existence
-//                let x = i - center.x;
-//                let y = j - center.y;
-//                let z = k - center.z;
-//
-//                if (x * x + y * y + z * z < radius * radius) {
-//                    particlesPosition.push(i, j, k, shapeId);
-//                    particlesVelocity.push(0, 0, 0, 0); //Velocity is zero for all the particles.
-//                    totalParticles++;
-//                    partialParticles++;
-//                }
-//            }
-//        }
-//    }
 
     for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
         for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
@@ -122,17 +223,18 @@ function generateSphere(radius, center, stiffness) {
 
 }
 
+for(let i = 0; i < 8; i ++) generateBox(12, {x: 50, y: 30 + i * 20, z: 50 + i * 2}, 0.99);
 
 //Generate the soft body spheres
 
-let r = 20;
-for(let x = 1; x <= 1; x ++) {
-    for(let y = -2; y <= 1; y ++) {
-        for(let z = -1; z <= 1; z ++) {
-            generateSphere(r * 0.4, {x: 50 + x * r + 2. * Math.random(), y: 50 + y * r + 2. * Math.random(), z: 50 + z * r + 2. * Math.random()}, 0.15);
-        }
-    }
-}
+//let r = 20;
+//for(let x = 1; x <= 1; x ++) {
+//    for(let y = -2; y <= 1; y ++) {
+//        for(let z = -1; z <= 1; z ++) {
+//            generateSphere(r * 0.4, {x: 50 + x * r + 2. * Math.random(), y: 50 + y * r + 2. * Math.random(), z: 50 + z * r + 2. * Math.random()}, 0.15);
+//        }
+//    }
+//}
 
 console.log(shapeInfo);
 
@@ -299,6 +401,11 @@ collisionsProgram.prevPositions =               gl.getUniformLocation(collisions
 collisionsProgram.voxelResolution =             gl.getUniformLocation(collisionsProgram, "uVoxelResolution");
 collisionsProgram.shapesInfo =                  gl.getUniformLocation(collisionsProgram, "uShapesInfo");
 collisionsProgram.centerOfMass =                gl.getUniformLocation(collisionsProgram, "uCenterOfMass");
+collisionsProgram.linearMatrix0 =               gl.getUniformLocation(collisionsProgram, "uLinearMatrix0");
+collisionsProgram.linearMatrix1 =               gl.getUniformLocation(collisionsProgram, "uLinearMatrix1");
+collisionsProgram.linearMatrix2 =               gl.getUniformLocation(collisionsProgram, "uLinearMatrix2");
+collisionsProgram.velocityTexture =             gl.getUniformLocation(collisionsProgram, "uVelocityTexture");
+
 
 
 let generateLinearMatrixProgram =               webGL2.generateProgram(vsQuad, fsGenerateLinearMatrix);
@@ -443,6 +550,10 @@ let render = () => {
             webGL2.bindTexture(collisionsProgram.prevPositions, positionsTexture, 1);
             webGL2.bindTexture(collisionsProgram.centerOfMass, centerOfMassTexture, 2);
             webGL2.bindTexture(collisionsProgram.shapesInfo, shapeInfoTexture, 3);
+            webGL2.bindTexture(collisionsProgram.linearMatrix0, linearMatrixTexture0, 4);
+            webGL2.bindTexture(collisionsProgram.linearMatrix1, linearMatrixTexture1, 5);
+            webGL2.bindTexture(collisionsProgram.linearMatrix2, linearMatrixTexture2, 6);
+            webGL2.bindTexture(collisionsProgram.velocityTexture, velocityTexture, 7);
             gl.clear(gl.COLOR_BUFFER_BIT);
             gl.drawArrays(gl.POINTS, 0, totalParticles);
 

@@ -8,10 +8,21 @@ uniform sampler2D uPrevPositions;
 uniform sampler2D uShapesInfo;
 uniform sampler2D uCenterOfMass;
 uniform float uVoxelResolution;
+uniform sampler2D uLinearMatrix0;
+uniform sampler2D uLinearMatrix1;
+uniform sampler2D uLinearMatrix2;
+uniform sampler2D uVelocityTexture;
 
 
 out vec4 colorData1;
 out vec4 colorData2;
+
+float sdBox( vec3 p, vec3 b )
+{
+  vec3 d = abs(p) - b;
+  return length(max(d,0.0))
+         + min(max(d.x,max(d.y,d.z)),0.0); // remove this line for an only partially signed sdf
+}
 
 void main() {
 
@@ -20,6 +31,9 @@ void main() {
     vec2 index = vec2(float(gl_VertexID % tSize) + 0.5, (floor(float(gl_VertexID) / tSizef)) + 0.5) / tSizef;
 
     vec4 positionData = texture(uPositions, index);
+
+    vec3 velocity = texture(uVelocityTexture, index).rgb;
+
     vec3 position = positionData.rgb;
     vec3 prevPosition = texture(uPrevPositions, index).rgb;
 
@@ -33,16 +47,24 @@ void main() {
         if((positionData.a - 1.) != float(i)) {
 
             float amountOfParticles = texelFetch(uShapesInfo, ivec2(3 * i, 0), 0).r;
-            float c_shapeRadius = texelFetch(uShapesInfo, ivec2(3 * i + 1, 0), 0).r;
-
+            float c_shapeSide = texelFetch(uShapesInfo, ivec2(3 * i + 1, 0), 0).r;
             vec3 centerOfMass = texelFetch(uCenterOfMass, ivec2(i, 0), 0).rgb / amountOfParticles;
 
-            vec3 n3 = position - centerOfMass;
-            float n1 = length(n3);
+            mat3 linearMatrix = mat3(0.);
+            linearMatrix[0] = texelFetch(uLinearMatrix0, ivec2(i, 0), 0).rgb;
+            linearMatrix[1] = texelFetch(uLinearMatrix1, ivec2(i, 0), 0).rgb;
+            linearMatrix[2] = texelFetch(uLinearMatrix2, ivec2(i, 0), 0).rgb;
 
-            if(n1 < c_shapeRadius) {
+            if(length(linearMatrix[0]) == 0. && length(linearMatrix[1]) == 0. && length(linearMatrix[2]) == 0.) {
+                linearMatrix = mat3(1., 0., 0., 0., 1., 0., 0., 0., 1.);
+            }
 
-                position = centerOfMass + normalize(n3) * c_shapeRadius;
+            vec3 xLocal =  linearMatrix * (position - centerOfMass);
+            float d = sdBox(xLocal,  vec3(c_shapeSide * 0.5));
+
+            if(d < 0.) {
+                vec3 box = vec3(c_shapeSide);
+                position = centerOfMass + 1.1 * inverse(linearMatrix) * min(box, max(-box, linearMatrix * (prevPosition - centerOfMass)));
                 prevPosition = position;
             }
 
