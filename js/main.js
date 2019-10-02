@@ -22,7 +22,7 @@ import {vsRenderBGSphere}       from './shaders/utils/vs-renderBGSphere.js';
 //=======================================================================================================
 
 let canvas = document.querySelector("#canvas3D");
-canvas.height = window.innerHeight
+canvas.height = window.innerHeight;
 canvas.width = window.innerWidth;
 canvas.style.width = String(canvas.width) + "px";
 canvas.style.height = String(canvas.height) + "px";
@@ -36,7 +36,7 @@ let FOV = 30;
 //For the arranged particles
 let particlesTextureSize;
 let particlesPosition = [];
-let particlesVelocity = []
+let particlesVelocity = [];
 let currentFrame = 0;
 let totalParticles = 0;
 let totalIndexes = 0;
@@ -45,11 +45,11 @@ let shapeInfo = [];
 
 
 const voxelResolution = 100;
-const iterations = 10;
-const deltaTime = 0.05;
+const iterations = 6;
+const deltaTime = 0.1;
 
-let latitudeBands = 5;
-let longitudeBands = 5;
+let latitudeBands = 30;
+let longitudeBands = 30;
 let amountOfShapes = 0;
 let simulate = true;
 
@@ -223,54 +223,23 @@ function generateSphere(radius, center, stiffness) {
 
 }
 
-for(let i = 0; i < 8; i ++) generateBox(12, {x: 50, y: 30 + i * 20, z: 50 + i * 2}, 0.99);
+//for(let i = 0; i < 3; i ++) generateBox(20, {x: 50, y: 30 + i * 40, z: 50 + i * 3}, 0.05);
 
 //Generate the soft body spheres
 
-//let r = 20;
-//for(let x = 1; x <= 1; x ++) {
-//    for(let y = -2; y <= 1; y ++) {
-//        for(let z = -1; z <= 1; z ++) {
-//            generateSphere(r * 0.4, {x: 50 + x * r + 2. * Math.random(), y: 50 + y * r + 2. * Math.random(), z: 50 + z * r + 2. * Math.random()}, 0.15);
-//        }
-//    }
-//}
+let r = 20;
+for(let x = 1; x <= 1; x ++) {
+    for(let y = -1; y <= 1; y ++) {
+        for(let z = -1; z <= 1; z ++) {
+            generateSphere(r * 0.4, {x: 50 + x * r + 2. * Math.random(), y: 50 + y * r + 2. * Math.random(), z: 50 + z * r + 2. * Math.random()}, 0.1);
+        }
+    }
+}
 
 console.log(shapeInfo);
 
 
 let borderSphereIndexes = webGL2.createBuffer(indexParticles, true);
-
-
-////Generate information for the containing sphere
-//let borderSphereVertices = [];
-//let borderSphereIndexes = [];
-//generateSphere(60, {x: 64, y: 64, z: 64}, borderSphereVertices, borderSphereIndexes);
-//
-//const totalIndexes = borderSphereIndexes.length;
-//
-//borderSphereVertices = webGL2.createBuffer(borderSphereVertices);
-//borderSphereIndexes = webGL2.createBuffer(borderSphereIndexes, true);
-
-
-////Generate the position and velocity
-//for (let i = 0; i < voxelResolution; i++) {
-//    for (let j = 0; j < voxelResolution; j++) {
-//        for (let k = 0; k < voxelResolution; k++) {
-//
-//            //Condition for the particle position and existence
-//            let x = i - voxelResolution * 0.5;
-//            let y = j - voxelResolution * 0.5;
-//            let z = k - voxelResolution * 0.5 + 24;
-//
-//            if (x * x + y * y + z * z < radius * radius) {
-//                particlesPosition.push(i, j, k, 1);
-//                particlesVelocity.push(0, 0, 0, 0); //Velocity is zero for all the particles.
-//                totalParticles++;
-//            }
-//        }
-//    }
-//}
 
 console.log("the total particles are: " + totalParticles);
 
@@ -288,6 +257,7 @@ for(let i = totalParticles; i < particlesTextureSize * particlesTextureSize; i +
 //Particles texture information
 let positionsTexture =                      webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
 let prevPositionsTexture =                  webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
+let prevPositionsTexture2 =                 webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
 let iterationsTextureA =                    webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
 let iterationsTextureB =                    webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
 let velocityTexture =                       webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesVelocity));
@@ -301,6 +271,8 @@ let iterationsAfb =                         webGL2.createDrawFramebuffer(iterati
 let initialRelativePositionFramebuffer =    webGL2.createDrawFramebuffer(initialRelativePositionTexture);
 let relativePositionFramebuffer =           webGL2.createDrawFramebuffer(relativePositionTexture);
 let collisionsFB =                          webGL2.createDrawFramebuffer([iterationsTextureB, prevPositionsTexture]);
+let prevPositionsFB =                       webGL2.createDrawFramebuffer(prevPositionsTexture2);
+
 
 
 //Shape information
@@ -615,6 +587,15 @@ let render = () => {
         webGL2.bindTexture(updateVelocityProgram.positionOld, prevPositionsTexture, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.POINTS, 0, totalParticles);
+
+
+        //Update the prevPositions
+        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, prevPositionsFB);
+        gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
+        gl.useProgram(textureProgram);
+        webGL2.bindTexture(textureProgram.texture, positionsTexture, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
 
         //Update the positions.

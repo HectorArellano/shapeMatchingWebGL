@@ -35,6 +35,7 @@ void main() {
     vec3 velocity = texture(uVelocityTexture, index).rgb;
 
     vec3 position = positionData.rgb;
+
     vec3 prevPosition = texture(uPrevPositions, index).rgb;
 
 
@@ -50,22 +51,34 @@ void main() {
             float c_shapeSide = texelFetch(uShapesInfo, ivec2(3 * i + 1, 0), 0).r;
             vec3 centerOfMass = texelFetch(uCenterOfMass, ivec2(i, 0), 0).rgb / amountOfParticles;
 
-            mat3 linearMatrix = mat3(0.);
-            linearMatrix[0] = texelFetch(uLinearMatrix0, ivec2(i, 0), 0).rgb;
-            linearMatrix[1] = texelFetch(uLinearMatrix1, ivec2(i, 0), 0).rgb;
-            linearMatrix[2] = texelFetch(uLinearMatrix2, ivec2(i, 0), 0).rgb;
+//            mat3 linearMatrix = mat3(0.);
+//            linearMatrix[0] = texelFetch(uLinearMatrix0, ivec2(i, 0), 0).rgb;
+//            linearMatrix[1] = texelFetch(uLinearMatrix1, ivec2(i, 0), 0).rgb;
+//            linearMatrix[2] = texelFetch(uLinearMatrix2, ivec2(i, 0), 0).rgb;
+//
+//            if(length(linearMatrix[0]) == 0. && length(linearMatrix[1]) == 0. && length(linearMatrix[2]) == 0.) {
+//                linearMatrix = mat3(1., 0., 0., 0., 1., 0., 0., 0., 1.);
+//            }
+//
+//            vec3 xLocal = transpose(linearMatrix) * (position - centerOfMass) + 0.5 * vec3(c_shapeSide);
+//
+//            float d = sdBox(xLocal,  vec3(c_shapeSide));
+//
+//            if(d <= 0.) {
+//
+//                position += abs(d) * normalize(velocity);
+//                prevPosition = position;
+//
+//            }
 
-            if(length(linearMatrix[0]) == 0. && length(linearMatrix[1]) == 0. && length(linearMatrix[2]) == 0.) {
-                linearMatrix = mat3(1., 0., 0., 0., 1., 0., 0., 0., 1.);
-            }
+            //For bounding spheres
+            vec3 d = (position - centerOfMass);
 
-            vec3 xLocal =  linearMatrix * (position - centerOfMass);
-            float d = sdBox(xLocal,  vec3(c_shapeSide * 0.5));
+            if(length(d) < 1.001 * c_shapeSide) {
 
-            if(d < 0.) {
-                vec3 box = vec3(c_shapeSide);
-                position = centerOfMass + 1.1 * inverse(linearMatrix) * min(box, max(-box, linearMatrix * (prevPosition - centerOfMass)));
+                position = centerOfMass + 1.001 * c_shapeSide * normalize(d);
                 prevPosition = position;
+
             }
 
         }
