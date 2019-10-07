@@ -227,11 +227,11 @@ function generateSphere(radius, center, stiffness) {
 
 //Generate the soft body spheres
 
-let r = 20;
+let r = 30;
 for(let x = -1; x <= 1; x ++) {
-    for(let y = -1; y <= 1; y ++) {
+    for(let y = 0; y <= 0; y ++) {
         for(let z = -1; z <= 1; z ++) {
-            generateSphere(0.5 * r, {x: 50 + x * r, y: 50 + y * r , z: 50 + z * r }, 0.1);
+            generateSphere(0.5 * r, {x: 50 + x * r, y: 50 + y * r , z: 50 + z * r }, 0.08);
         }
     }
 }
@@ -422,7 +422,7 @@ let generateRandomPoints = () =>  {
         let cosTheta = Math.cos(theta);
         let sinPhi = Math.sin(phi);
         let cosPhi = Math.cos(phi);
-        let radius = voxelResolution * 0.5 * Math.sqrt(Math.random());
+        let radius = voxelResolution * 0.2 * Math.sqrt(Math.random());
 
         let x = radius * cosPhi * sinTheta + voxelResolution * 0.5;
         let y = radius * cosTheta + voxelResolution * 0.5;

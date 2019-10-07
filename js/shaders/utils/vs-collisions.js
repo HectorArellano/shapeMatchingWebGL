@@ -76,7 +76,7 @@ void main() {
 
             if(length(d) < 1.001 * c_shapeSide) {
 
-                position = centerOfMass + 1.001 * c_shapeSide * normalize(d);
+                position = centerOfMass + 1.002 * c_shapeSide * normalize(d);
                 prevPosition = position;
 
             }
@@ -97,8 +97,8 @@ void main() {
     if(distance > 0. ) {
 
 //        position.y = 0.;
-        position = center + normalize(normal) * radius;
-        prevPosition = position;
+//        position = center + normalize(normal) * radius;
+//        prevPosition = position;
 
     }
 
