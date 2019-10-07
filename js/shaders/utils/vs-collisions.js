@@ -76,7 +76,7 @@ void main() {
 
             if(length(d) < 1.001 * c_shapeSide) {
 
-                position = centerOfMass + 1.002 * c_shapeSide * normalize(d);
+                position = centerOfMass + 1.001 * c_shapeSide * normalize(d);
                 prevPosition = position;
 
             }

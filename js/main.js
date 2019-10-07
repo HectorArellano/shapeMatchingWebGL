@@ -45,7 +45,7 @@ let shapeInfo = [];
 
 
 const voxelResolution = 100;
-const iterations = 6;
+const iterations = 3;
 const deltaTime = 0.1;
 
 let latitudeBands = 30;
@@ -231,7 +231,7 @@ let r = 30;
 for(let x = -1; x <= 1; x ++) {
     for(let y = 0; y <= 0; y ++) {
         for(let z = -1; z <= 1; z ++) {
-            generateSphere(0.5 * r, {x: 50 + x * r, y: 50 + y * r , z: 50 + z * r }, 0.08);
+            generateSphere(0.5 * r, {x: 50 + x * r, y: 50 + y * r , z: 50 + z * r }, 0.05);
         }
     }
 }
