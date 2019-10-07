@@ -228,15 +228,13 @@ function generateSphere(radius, center, stiffness) {
 //Generate the soft body spheres
 
 let r = 20;
-for(let x = 1; x <= 1; x ++) {
+for(let x = -1; x <= 1; x ++) {
     for(let y = -1; y <= 1; y ++) {
         for(let z = -1; z <= 1; z ++) {
-            generateSphere(r * 0.4, {x: 50 + x * r + 2. * Math.random(), y: 50 + y * r + 2. * Math.random(), z: 50 + z * r + 2. * Math.random()}, 0.1);
+            generateSphere(0.5 * r, {x: 50 + x * r, y: 50 + y * r , z: 50 + z * r }, 0.1);
         }
     }
 }
-
-console.log(shapeInfo);
 
 
 let borderSphereIndexes = webGL2.createBuffer(indexParticles, true);
@@ -314,6 +312,10 @@ let linearMatrixTexture2 =                  webGL2.createTexture2D(amountOfShape
 let linearMatrixFB =                        webGL2.createDrawFramebuffer([linearMatrixTexture0, linearMatrixTexture1, linearMatrixTexture2]);
 
 
+//Used to define the attractor for the spheres.
+let attractorTexture =                      webGL2.createTexture2D(amountOfShapes, 1, gl.RGB32F, gl.RGB, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+
+
 let sumsLevelsTex = [];
 let sumsLevelsFB = [];
 for (let i = 0; i < Math.ceil(Math.log(particlesTextureSize) / Math.log(2)); i++) {
@@ -358,7 +360,10 @@ let predictPositionsProgram =                   webGL2.generateProgram(predictPo
 predictPositionsProgram.positionTexture =       gl.getUniformLocation(predictPositionsProgram, "uTexturePosition");
 predictPositionsProgram.velocityTexture =       gl.getUniformLocation(predictPositionsProgram, "uTextureVelocity");
 predictPositionsProgram.deltaTime =             gl.getUniformLocation(predictPositionsProgram, "uDeltaTime");
-predictPositionsProgram.acceleration =          gl.getUniformLocation(predictPositionsProgram, "uAcceleration");
+predictPositionsProgram.accelerationTexture =   gl.getUniformLocation(predictPositionsProgram, "uAttractorTexture");
+predictPositionsProgram.centerOfMass =          gl.getUniformLocation(predictPositionsProgram, "uCenterOfMass");
+predictPositionsProgram.shapesInfo =            gl.getUniformLocation(predictPositionsProgram, "uShapesInfo");
+
 
 
 let updateVelocityProgram =                     webGL2.generateProgram(vsUpdateVelocity, fsColor);
@@ -406,6 +411,31 @@ renderParticlesProgram.positionTexture =        gl.getUniformLocation(renderPart
 renderBGSphereProgram.cameraMatrix =            gl.getUniformLocation(renderBGSphereProgram, "uCameraMatrix");
 renderBGSphereProgram.perspectiveMatrix =       gl.getUniformLocation(renderBGSphereProgram, "uPMatrix");
 
+
+let generateRandomPoints = () =>  {
+    let dataArray = [];
+
+    for(let i = 0; i < amountOfShapes; i ++) {
+        let phi = 2 * Math.PI * Math.random();
+        let theta = Math.PI * Math.random();
+        let sinTheta = Math.sin(theta);
+        let cosTheta = Math.cos(theta);
+        let sinPhi = Math.sin(phi);
+        let cosPhi = Math.cos(phi);
+        let radius = voxelResolution * 0.5 * Math.sqrt(Math.random());
+
+        let x = radius * cosPhi * sinTheta + voxelResolution * 0.5;
+        let y = radius * cosTheta + voxelResolution * 0.5;
+        let z = radius * sinPhi * sinTheta + voxelResolution * 0.5;
+
+        dataArray.push(x, y, z);
+    }
+
+    gl.bindTexture(gl.TEXTURE_2D, attractorTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, amountOfShapes, 1, 0, gl.RGB, gl.FLOAT, new Float32Array(dataArray));
+
+    dataArray = null;
+}
 
 
 let calculateSums = (initialTexture, outputFramebuffer, shapeId) => {
@@ -476,6 +506,10 @@ calculateRelativePositions(initialCenterOfMassTexture, initialRelativePositionFr
 startMatrixApq(initialRelativePositionTexture, initialRelativePositionTexture, [AqqFB0, AqqFB1, AqqFB2]);
 
 
+//Generate the attractors for the spheres
+generateRandomPoints();
+setInterval(generateRandomPoints, 1000);
+
 
 //=======================================================================================================
 // Simulation and Rendering
@@ -490,11 +524,6 @@ let render = () => {
     requestAnimationFrame(render);
 
     camera.updateCamera(FOV, canvas.width/canvas.height, cameraDistance);
-    let acceleration = {
-        x: 0 * Math.sin(currentFrame * Math.PI / 180),
-        y: -10,
-        z: 0 * Math.cos(currentFrame * Math.PI / 180)
-    }
 
 
     if(simulate) {
@@ -506,6 +535,9 @@ let render = () => {
         gl.uniform3f(predictPositionsProgram.acceleration, 0, -10, 0);
         webGL2.bindTexture(predictPositionsProgram.positionTexture, positionsTexture, 0);
         webGL2.bindTexture(predictPositionsProgram.velocityTexture, velocityTexture, 1);
+        webGL2.bindTexture(predictPositionsProgram.accelerationTexture, attractorTexture, 2);
+        webGL2.bindTexture(predictPositionsProgram.centerOfMass, currentFrame == 0? initialCenterOfMassTexture : centerOfMassTexture, 3);
+        webGL2.bindTexture(predictPositionsProgram.shapesInfo, shapeInfoTexture, 4);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.POINTS, 0, totalParticles);
 
@@ -641,8 +673,7 @@ let render = () => {
     gl.disable(gl.BLEND);
 
 
-
-
+    currentFrame ++;
 
 };
 

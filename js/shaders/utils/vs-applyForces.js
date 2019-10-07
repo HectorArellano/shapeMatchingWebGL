@@ -5,8 +5,11 @@ precision highp float;
 
 uniform sampler2D uTexturePosition;
 uniform sampler2D uTextureVelocity;
+uniform sampler2D uAttractorTexture;
+uniform sampler2D uCenterOfMass;
+uniform sampler2D uShapesInfo;
+
 uniform float uDeltaTime;
-uniform vec3 uAcceleration;
 
 out vec4 colorData;
 
@@ -20,7 +23,14 @@ void main() {
 
     vec4 positionData = texture(uTexturePosition, index);
 
-    colorData = vec4(positionData.rgb + (texture(uTextureVelocity, index).rgb + uAcceleration * uDeltaTime) * uDeltaTime, positionData.a);
+    int shapeId = int(positionData.a) - 1;
+    float particlesPerShape = texelFetch(uShapesInfo, ivec2(shapeId * 3, 0), 0).r;
+    vec3 centerOfMass = texelFetch(uCenterOfMass, ivec2(shapeId, 0), 0).rgb / particlesPerShape;
+    vec3 attractor = texelFetch(uAttractorTexture, ivec2(shapeId, 0), 0).rgb;
+
+    vec3 acceleration = 3. * normalize(attractor - centerOfMass);
+
+    colorData = vec4(positionData.rgb + (texture(uTextureVelocity, index).rgb + acceleration * uDeltaTime) * uDeltaTime, positionData.a);
 }
 
 `;
