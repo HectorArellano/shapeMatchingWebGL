@@ -51,36 +51,27 @@ void main() {
             float c_shapeSide = texelFetch(uShapesInfo, ivec2(3 * i + 1, 0), 0).r;
             vec3 centerOfMass = texelFetch(uCenterOfMass, ivec2(i, 0), 0).rgb / amountOfParticles;
 
-//            mat3 linearMatrix = mat3(0.);
-//            linearMatrix[0] = texelFetch(uLinearMatrix0, ivec2(i, 0), 0).rgb;
-//            linearMatrix[1] = texelFetch(uLinearMatrix1, ivec2(i, 0), 0).rgb;
-//            linearMatrix[2] = texelFetch(uLinearMatrix2, ivec2(i, 0), 0).rgb;
-//
-//            if(length(linearMatrix[0]) == 0. && length(linearMatrix[1]) == 0. && length(linearMatrix[2]) == 0.) {
-//                linearMatrix = mat3(1., 0., 0., 0., 1., 0., 0., 0., 1.);
-//            }
-//
-//            vec3 xLocal = transpose(linearMatrix) * (position - centerOfMass) + 0.5 * vec3(c_shapeSide);
-//
-//            float d = sdBox(xLocal,  vec3(c_shapeSide));
-//
-//            if(d <= 0.) {
-//
-//                position += abs(d) * normalize(velocity);
-//                prevPosition = position;
-//
-//            }
-
-            //For bounding spheres
+            //Test the bounding spheres before checking the inner particles
             vec3 d = (position - centerOfMass);
+            if(length(d) < 1.3 * c_shapeSide) {
 
-            if(length(d) < 1.001 * c_shapeSide) {
+                //Test the inner particles from the shape
+                int partialParticles = int(amountOfParticles);
+                for(int j = partialParticles * i; j < partialParticles * (i + 1); j ++) {
 
-                position = centerOfMass + 1.001 * c_shapeSide * normalize(d);
-                prevPosition = position;
+                    vec2 c_index = vec2(float(j % tSize) + 0.5, (floor(float(j) / tSizef)) + 0.5) / tSizef;
+                    vec3 c_position = texture(uPositions, c_index).rgb;
+
+                    vec3 c_dist = position - c_position;
+                    if(length(c_dist) < 1.) {
+
+                        position += 0.5 * normalize(c_dist);
+                        prevPosition = position;
+
+                    }
+                }
 
             }
-
         }
     }
 
