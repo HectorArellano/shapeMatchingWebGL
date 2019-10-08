@@ -1,19 +1,21 @@
 import {gl}                     from './utils/webGL2.js';
 import * as webGL2              from './utils/webGL2.js';
 import {Camera}                 from './utils/camera.js';
+
+import {fsCalculateSums}        from './shaders/shapeMatching/fs-sums.js';
+import {vsRelativePosition}     from './shaders/shapeMatching/vs-relativePosition.js';
+import {fsGenerateMatrix}       from './shaders/shapeMatching/fs-generateMatrix.js';
+import {predictPositions}       from './shaders/shapeMatching/vs-applyForces.js';
+import {vsUpdateVelocity}       from './shaders/shapeMatching/vs-updateVelocity.js';
+import {vsCollisions}           from './shaders/shapeMatching/vs-collisions.js';
+import {fsGenerateLinearMatrix} from './shaders/shapeMatching/fs-generateLinearMatrix.js';
+import {vsTransformParticles}   from './shaders/shapeMatching/vs-transformParticles.js';
+import {fsCollisions}           from './shaders/shapeMatching/fs-collisions.js';
+
 import {vsParticles}            from './shaders/utils/vs-renderParticles.js'
 import {fsColor}                from './shaders/utils/fs-simpleColor.js';
 import {fsTextureColor}         from './shaders/utils/fs-simpleTexture.js';
-import {fsCalculateSums}        from './shaders/utils/fs-sums.js';
 import {vsQuad}                 from './shaders/utils/vs-quad.js';
-import {vsRelativePosition}     from './shaders/utils/vs-relativePosition.js';
-import {fsGenerateMatrix}       from './shaders/utils/fs-generateMatrix.js';
-import {predictPositions}       from './shaders/utils/vs-applyForces.js';
-import {vsUpdateVelocity}       from './shaders/utils/vs-updateVelocity.js';
-import {vsCollisions}           from './shaders/utils/vs-collisions.js';
-import {fsGenerateLinearMatrix} from './shaders/utils/fs-generateLinearMatrix.js';
-import {vsTransformParticles}   from './shaders/utils/vs-transformParticles.js';
-import {fsCollisions}           from './shaders/utils/fs-collisions.js';
 import {vsRenderBGSphere}       from './shaders/utils/vs-renderBGSphere.js';
 
 
@@ -253,67 +255,67 @@ for(let i = totalParticles; i < particlesTextureSize * particlesTextureSize; i +
 
 
 //Particles texture information
-let positionsTexture =                      webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
-let prevPositionsTexture =                  webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
-let prevPositionsTexture2 =                 webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
-let iterationsTextureA =                    webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
-let iterationsTextureB =                    webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
-let velocityTexture =                       webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesVelocity));
-let initialRelativePositionTexture =        webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
-let relativePositionTexture =               webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const positionsTexture =                      webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
+const prevPositionsTexture =                  webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
+const prevPositionsTexture2 =                 webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
+const iterationsTextureA =                    webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
+const iterationsTextureB =                    webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesPosition));
+const velocityTexture =                       webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(particlesVelocity));
+const initialRelativePositionTexture =        webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const relativePositionTexture =               webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
 
 
-let positionsFB =                           webGL2.createDrawFramebuffer(positionsTexture);
-let velocityFB =                            webGL2.createDrawFramebuffer(velocityTexture);
-let iterationsAfb =                         webGL2.createDrawFramebuffer(iterationsTextureA);
-let initialRelativePositionFramebuffer =    webGL2.createDrawFramebuffer(initialRelativePositionTexture);
-let relativePositionFramebuffer =           webGL2.createDrawFramebuffer(relativePositionTexture);
-let collisionsFB =                          webGL2.createDrawFramebuffer([iterationsTextureB, prevPositionsTexture]);
-let prevPositionsFB =                       webGL2.createDrawFramebuffer(prevPositionsTexture2);
+const positionsFB =                           webGL2.createDrawFramebuffer(positionsTexture);
+const velocityFB =                            webGL2.createDrawFramebuffer(velocityTexture);
+const iterationsAfb =                         webGL2.createDrawFramebuffer(iterationsTextureA);
+const initialRelativePositionFramebuffer =    webGL2.createDrawFramebuffer(initialRelativePositionTexture);
+const relativePositionFramebuffer =           webGL2.createDrawFramebuffer(relativePositionTexture);
+const collisionsFB =                          webGL2.createDrawFramebuffer([iterationsTextureB, prevPositionsTexture]);
+const prevPositionsFB =                       webGL2.createDrawFramebuffer(prevPositionsTexture2);
 
 
 
 //Shape information
-let shapeInfoTexture =                      webGL2.createTexture2D(amountOfShapes * 3, 1, gl.R32F, gl.RED, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(shapeInfo));
+const shapeInfoTexture =                      webGL2.createTexture2D(amountOfShapes * 3, 1, gl.R32F, gl.RED, gl.NEAREST, gl.NEAREST, gl.FLOAT, new Float32Array(shapeInfo));
 
 
-let initialCenterOfMassTexture =            webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT);
-let initialCenterOfMassFB =                 webGL2.createDrawFramebuffer(initialCenterOfMassTexture);
+const initialCenterOfMassTexture =            webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT);
+const initialCenterOfMassFB =                 webGL2.createDrawFramebuffer(initialCenterOfMassTexture);
 
-let centerOfMassTexture =                   webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT);
-let centerOfMassFB =                        webGL2.createDrawFramebuffer(centerOfMassTexture);
+const centerOfMassTexture =                   webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT);
+const centerOfMassFB =                        webGL2.createDrawFramebuffer(centerOfMassTexture);
 
 
 //Textures and framebuffers for the matrices evaluations
-let matrixParticlesTexture0 =               webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
-let matrixParticlesTexture1 =               webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
-let matrixParticlesTexture2 =               webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
-let matrixParticlesFB =                     webGL2.createDrawFramebuffer([matrixParticlesTexture0, matrixParticlesTexture1, matrixParticlesTexture2]);
+const matrixParticlesTexture0 =               webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const matrixParticlesTexture1 =               webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const matrixParticlesTexture2 =               webGL2.createTexture2D(particlesTextureSize, particlesTextureSize, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const matrixParticlesFB =                     webGL2.createDrawFramebuffer([matrixParticlesTexture0, matrixParticlesTexture1, matrixParticlesTexture2]);
 
-let AqqTexture0 =                           webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
-let AqqTexture1 =                           webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
-let AqqTexture2 =                           webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const AqqTexture0 =                           webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const AqqTexture1 =                           webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const AqqTexture2 =                           webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
 
-let AqqFB0 =                                webGL2.createDrawFramebuffer(AqqTexture0);
-let AqqFB1 =                                webGL2.createDrawFramebuffer(AqqTexture1);
-let AqqFB2 =                                webGL2.createDrawFramebuffer(AqqTexture2);
+const AqqFB0 =                                webGL2.createDrawFramebuffer(AqqTexture0);
+const AqqFB1 =                                webGL2.createDrawFramebuffer(AqqTexture1);
+const AqqFB2 =                                webGL2.createDrawFramebuffer(AqqTexture2);
 
-let ApqTexture0 =                           webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
-let ApqTexture1 =                           webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
-let ApqTexture2 =                           webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const ApqTexture0 =                           webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const ApqTexture1 =                           webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const ApqTexture2 =                           webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
 
-let ApqFB0 =                                webGL2.createDrawFramebuffer(ApqTexture0);
-let ApqFB1 =                                webGL2.createDrawFramebuffer(ApqTexture1);
-let ApqFB2 =                                webGL2.createDrawFramebuffer(ApqTexture2);
+const ApqFB0 =                                webGL2.createDrawFramebuffer(ApqTexture0);
+const ApqFB1 =                                webGL2.createDrawFramebuffer(ApqTexture1);
+const ApqFB2 =                                webGL2.createDrawFramebuffer(ApqTexture2);
 
-let linearMatrixTexture0 =                  webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
-let linearMatrixTexture1 =                  webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
-let linearMatrixTexture2 =                  webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
-let linearMatrixFB =                        webGL2.createDrawFramebuffer([linearMatrixTexture0, linearMatrixTexture1, linearMatrixTexture2]);
+const linearMatrixTexture0 =                  webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const linearMatrixTexture1 =                  webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const linearMatrixTexture2 =                  webGL2.createTexture2D(amountOfShapes, 1, gl.RGBA32F, gl.RGBA, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const linearMatrixFB =                        webGL2.createDrawFramebuffer([linearMatrixTexture0, linearMatrixTexture1, linearMatrixTexture2]);
 
 
 //Used to define the attractor for the spheres.
-let attractorTexture =                      webGL2.createTexture2D(amountOfShapes, 1, gl.RGB32F, gl.RGB, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
+const attractorTexture =                      webGL2.createTexture2D(amountOfShapes, 1, gl.RGB32F, gl.RGB, gl.NEAREST, gl.NEAREST, gl.FLOAT, null);
 
 
 let sumsLevelsTex = [];
@@ -508,7 +510,6 @@ startMatrixApq(initialRelativePositionTexture, initialRelativePositionTexture, [
 
 //Generate the attractors for the spheres
 generateRandomPoints();
-setInterval(generateRandomPoints, 1000);
 
 
 //=======================================================================================================
@@ -678,3 +679,127 @@ let render = () => {
 };
 
 render();
+
+
+
+
+
+
+//function generateBox(side, center, stiffness) {
+//
+//    amountOfShapes ++;
+//
+//    let partialParticles = 0;
+//
+//    for(let u = 0; u < 2; u ++) {
+//        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+//            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+//                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+//                let second = first + longitudeBands + 1;
+//
+//                indexParticles.push(first + totalParticles);
+//                indexParticles.push(second + totalParticles);
+//                indexParticles.push(first + 1 + totalParticles);
+//
+//                indexParticles.push(second + totalParticles);
+//                indexParticles.push(second + 1 + totalParticles);
+//                indexParticles.push(first + 1 + totalParticles);
+//                totalIndexes += 6;
+//            }
+//        }
+//
+//
+//        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+//            let aa = side * latNumber / latitudeBands;
+//
+//            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+//                let bb = side * longNumber / longitudeBands;
+//
+//                let x = aa - 0.5 * side + center.x;
+//                let y = bb - 0.5 * side + center.y;
+//                let z = 0.5 * side * (-1 + 2 * u) + center.z;
+//
+//                particlesPosition.push(x, y, z, amountOfShapes);
+//                particlesVelocity.push(0, 0, 0, 0);
+//                totalParticles++;
+//                partialParticles++;
+//            }
+//        }
+//    }
+//
+//    for(let u = 0; u < 2; u ++) {
+//        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+//            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+//                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+//                let second = first + longitudeBands + 1;
+//
+//                indexParticles.push(first + totalParticles);
+//                indexParticles.push(second + totalParticles);
+//                indexParticles.push(first + 1 + totalParticles);
+//
+//                indexParticles.push(second + totalParticles);
+//                indexParticles.push(second + 1 + totalParticles);
+//                indexParticles.push(first + 1 + totalParticles);
+//                totalIndexes += 6;
+//            }
+//        }
+//
+//
+//        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+//            let aa = side * latNumber / latitudeBands;
+//
+//            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+//                let bb = side * longNumber / longitudeBands;
+//
+//                let y = aa - 0.5 * side + center.y;
+//                let z = bb - 0.5 * side + center.z;
+//                let x = 0.5 * side * (-1 + 2 * u) + center.x;
+//
+//                particlesPosition.push(x, y, z, amountOfShapes);
+//                particlesVelocity.push(0, 0, 0, 0);
+//                totalParticles++;
+//                partialParticles++;
+//            }
+//        }
+//    }
+//
+//    for(let u = 0; u < 2; u ++) {
+//        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+//            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+//                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+//                let second = first + longitudeBands + 1;
+//
+//                indexParticles.push(first + totalParticles);
+//                indexParticles.push(second + totalParticles);
+//                indexParticles.push(first + 1 + totalParticles);
+//
+//                indexParticles.push(second + totalParticles);
+//                indexParticles.push(second + 1 + totalParticles);
+//                indexParticles.push(first + 1 + totalParticles);
+//                totalIndexes += 6;
+//            }
+//        }
+//
+//
+//        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+//            let aa = side * latNumber / latitudeBands;
+//
+//            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+//                let bb = side * longNumber / longitudeBands;
+//
+//                let x = aa - 0.5 * side + center.x;
+//                let z = bb - 0.5 * side + center.z;
+//                let y = 0.5 * side * (-1 + 2 * u) + center.y;
+//
+//                particlesPosition.push(x, y, z, amountOfShapes);
+//                particlesVelocity.push(0, 0, 0, 0);
+//                totalParticles++;
+//                partialParticles++;
+//            }
+//        }
+//    }
+//
+//    //This is for the shape information
+//    shapeInfo.push(partialParticles, side, stiffness);
+//
+//}
