@@ -515,4 +515,4 @@ let update = (deltaTime, iterations, _recalculateRandomPoints = false) => {
 
 };
 
-export {init, update, particlesTextureSize, totalParticles}
+export {init, update, positionsTexture, totalParticles, indexParticles}
