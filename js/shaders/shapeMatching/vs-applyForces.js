@@ -28,10 +28,8 @@ void main() {
     vec3 centerOfMass = texelFetch(uCenterOfMass, ivec2(shapeId, 0), 0).rgb / particlesPerShape;
     vec3 attractor = texelFetch(uAttractorTexture, ivec2(shapeId, 0), 0).rgb;
 
-    vec3 acceleration = 3. * normalize(attractor - centerOfMass);
+    vec3 acceleration = 6. * normalize(attractor - centerOfMass);
     
-    acceleration = vec3(0., -10., 0.);
-
     colorData = vec4(positionData.rgb + (texture(uTextureVelocity, index).rgb + acceleration * uDeltaTime) * uDeltaTime, positionData.a);
 }
 

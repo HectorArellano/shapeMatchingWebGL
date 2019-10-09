@@ -228,7 +228,7 @@ const generateRandomPoints = () =>  {
         let cosTheta = Math.cos(theta);
         let sinPhi = Math.sin(phi);
         let cosPhi = Math.cos(phi);
-        let radius = voxelResolution * 0.2 * Math.sqrt(Math.random());
+        let radius = voxelResolution * 0.1 * Math.sqrt(Math.random());
 
         let x = radius * cosPhi * sinTheta + voxelResolution * 0.5;
         let y = radius * cosTheta + voxelResolution * 0.5;
@@ -512,7 +512,7 @@ let update = (deltaTime, iterations, _recalculateRandomPoints = false) => {
     gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
     gl.useProgram(updateVelocityProgram);
     gl.uniform1f(updateVelocityProgram.deltaTime, deltaTime);
-    webGL2.bindTexture(updateVelocityProgram.position, iterationsTextureA, 0);
+    webGL2.bindTexture(updateVelocityProgram.position, iterationsTextureB, 0);
     webGL2.bindTexture(updateVelocityProgram.positionOld, prevPositionsTexture, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.POINTS, 0, totalParticles);
@@ -523,7 +523,7 @@ let update = (deltaTime, iterations, _recalculateRandomPoints = false) => {
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, positionsFB);
     gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
     gl.useProgram(textureProgram);
-    webGL2.bindTexture(textureProgram.texture, iterationsTextureA, 0);
+    webGL2.bindTexture(textureProgram.texture, iterationsTextureB, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
