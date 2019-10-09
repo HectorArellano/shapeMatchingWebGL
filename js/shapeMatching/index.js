@@ -260,7 +260,7 @@ const init = (_voxelResolution) => {
     for(let x = 0; x <= 0; x ++) {
         for(let y = 0; y <= 0; y ++) {
             for(let z = -1; z <= 1; z ++) {
-                generateSphere(0.5 * r, {x: c + x * r, y: c + y * r , z: c + z * r }, 0.05);
+                generateSphere(0.5 * r, {x: c + x * r, y: c + y * r , z: c + z * r }, 0.1);
             }
         }
     }

@@ -27,8 +27,8 @@ let cameraDistance = 2.5;
 let FOV = 30;
 let currentFrame = 0;
 
-const voxelResolution = 32;
-const iterations = 50;
+const voxelResolution = 64;
+const iterations = 10;
 const deltaTime = 0.1;
 
 
@@ -90,7 +90,7 @@ let render = () => {
     gl.uniform1f(renderParticlesProgram.scale, voxelResolution);
     gl.uniformMatrix4fv(renderParticlesProgram.cameraMatrix, false, camera.cameraTransformMatrix);
     gl.uniformMatrix4fv(renderParticlesProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
-    gl.drawArrays(gl.POINTS, 0, ShapeMatching.totalParticles);
+    // gl.drawArrays(gl.POINTS, 0, ShapeMatching.totalParticles);
     gl.disable(gl.DEPTH_TEST);
 
 

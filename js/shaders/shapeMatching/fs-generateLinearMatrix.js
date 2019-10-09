@@ -51,7 +51,7 @@ void main() {
     mat3 A = Apq * inverse(Aqq);
     A = pow(determinant(A), 1./ 4.) * A;
 
-    float beta = 0.2;
+    float beta = 0.5;
     A = beta * A + (1. - beta) * R;
 
     data1 = vec4(A[0], uShapeId);

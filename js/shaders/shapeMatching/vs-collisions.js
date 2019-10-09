@@ -53,7 +53,7 @@ void main() {
 
             //Test the bounding spheres before checking the inner particles
             vec3 d = (position - centerOfMass);
-            if(length(d) < 1.3 * c_shapeSide) {
+            if(length(d) < 1.5 * c_shapeSide) {
 
                 //Test the inner particles from the shape
                 int partialParticles = int(amountOfParticles);
@@ -63,9 +63,9 @@ void main() {
                     vec3 c_position = texture(uPositions, c_index).rgb;
 
                     vec3 c_dist = position - c_position;
-                    if(length(c_dist) < 1.) {
+                    if(length(c_dist) < 2.) {
 
-                        position += 0.5 * normalize(c_dist);
+                        position += normalize(prevPosition - c_position);
                         prevPosition = position;
 
                     }
@@ -88,8 +88,8 @@ void main() {
     if(distance > 0. ) {
 
 //        position.y = 0.;
-//        position = center + normalize(normal) * radius;
-//        prevPosition = position;
+       position = center + normalize(normal) * radius;
+       prevPosition = position;
 
     }
 
