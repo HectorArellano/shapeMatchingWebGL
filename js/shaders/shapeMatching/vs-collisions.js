@@ -65,8 +65,8 @@ void main() {
                     vec3 c_dist = position - c_position;
                     if(length(c_dist) < 2.) {
 
-                        position += normalize(prevPosition - c_position);
-                        prevPosition = position;
+                        position = c_position + 2.* normalize(prevPosition - c_position);
+                        //prevPosition = position;
 
                     }
                 }
