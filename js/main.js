@@ -27,8 +27,8 @@ let cameraDistance = 2.5;
 let FOV = 30;
 let currentFrame = 0;
 
-const voxelResolution = 64;
-const iterations = 30;
+const voxelResolution = 40;
+const iterations = 15;
 const deltaTime = 0.1;
 
 
@@ -48,6 +48,7 @@ let renderBGSphereProgram =                     webGL2.generateProgram(vsRenderB
 renderParticlesProgram.positionTexture =        gl.getUniformLocation(renderParticlesProgram, "uTexturePosition");
 renderBGSphereProgram.cameraMatrix =            gl.getUniformLocation(renderBGSphereProgram, "uCameraMatrix");
 renderBGSphereProgram.perspectiveMatrix =       gl.getUniformLocation(renderBGSphereProgram, "uPMatrix");
+renderBGSphereProgram.scale =                   gl.getUniformLocation(renderBGSphereProgram, "uScale");
 
 
 //=======================================================================================================
@@ -58,15 +59,14 @@ ShapeMatching.init(voxelResolution);
 let borderSphereIndexes = webGL2.createBuffer(ShapeMatching.indexParticles, true);
 let totalIndexes = ShapeMatching.indexParticles.length;
 
+camera.updateCamera(FOV, canvas.width/canvas.height, cameraDistance);
 
 let render = () => {
 
     requestAnimationFrame(render);
 
-    camera.updateCamera(FOV, canvas.width/canvas.height, cameraDistance);
-
     //Recalculate the attractors positions every n frames
-    ShapeMatching.update(deltaTime, iterations, currentFrame % 300 === 0);
+    ShapeMatching.update(deltaTime, iterations, currentFrame % 300 === 0, camera.cameraTransformMatrix, camera.perspectiveMatrix);
 
 
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
@@ -80,6 +80,7 @@ let render = () => {
     webGL2.bindTexture(renderBGSphereProgram.positionTexture, ShapeMatching.positionsTexture, 0);
     gl.uniformMatrix4fv(renderBGSphereProgram.cameraMatrix, false, camera.cameraTransformMatrix);
     gl.uniformMatrix4fv(renderBGSphereProgram.perspectiveMatrix, false, camera.perspectiveMatrix);
+    gl.uniform1f(renderBGSphereProgram.scale, voxelResolution);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, borderSphereIndexes);
     gl.drawElements(gl.TRIANGLES, totalIndexes, gl.UNSIGNED_SHORT, 0);
 

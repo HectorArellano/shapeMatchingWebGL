@@ -38,6 +38,11 @@ let latitudeBands = 30;
 let longitudeBands = 30;
 let amountOfShapes = 0;
 
+let planeX = 0;
+
+let transformMatrix;
+let perspectiveMatrix;
+
 //Variables holding the textures
 let positionsTexture,
     prevPositionsTexture,
@@ -260,7 +265,7 @@ const init = (_voxelResolution) => {
     for(let x = 0; x <= 0; x ++) {
         for(let y = 0; y <= 0; y ++) {
             for(let z = -1; z <= 1; z ++) {
-                generateSphere(0.5 * r, {x: c + x * r, y: c + y * r , z: c + z * r }, 0.1);
+                generateSphere(0.4 * r, {x: c + x * r, y: c + y * r , z: c + z * r}, 0.1);
             }
         }
     }
@@ -372,7 +377,7 @@ const init = (_voxelResolution) => {
     collisionsProgram.linearMatrix0 =               gl.getUniformLocation(collisionsProgram, "uLinearMatrix0");
     collisionsProgram.linearMatrix1 =               gl.getUniformLocation(collisionsProgram, "uLinearMatrix1");
     collisionsProgram.linearMatrix2 =               gl.getUniformLocation(collisionsProgram, "uLinearMatrix2");
-    collisionsProgram.velocityTexture =             gl.getUniformLocation(collisionsProgram, "uVelocityTexture");
+    collisionsProgram.planeX =                      gl.getUniformLocation(collisionsProgram, "uPlaneX");
 
     generateLinearMatrixProgram =                   webGL2.generateProgram(vsQuad, fsGenerateLinearMatrix);
     generateLinearMatrixProgram.shapeId =           gl.getUniformLocation(generateLinearMatrixProgram, "uShapeId");
@@ -412,6 +417,29 @@ const init = (_voxelResolution) => {
 
     particlesPosition = null;
     particlesVelocity = null;
+
+    //Move the plane in the x direction
+    window.addEventListener("mousemove", (e) => {
+       let A = mat4.create();
+       let B = mat4.create();
+
+       mat4.invert(A, transformMatrix);
+       mat4.invert(B, perspectiveMatrix);
+
+       const x = 2. * e.clientX / window.innerWidth - 1;
+       const y = 2. * e.clientY / window.innerHeight - 1;
+
+       let C = vec4.fromValues(x, y, 0.5, 1);
+
+       vec4.transformMat4(C, C, B);
+
+        // vec4.transformMat4(C, C, A);
+
+        planeX = 2 * C[0] * voxelResolution + 0.5 * voxelResolution;
+
+        console.log(planeX);
+
+    });
     
 }
 
@@ -421,8 +449,10 @@ const init = (_voxelResolution) => {
 //========================================================================================================================================
 
 
-let update = (deltaTime, iterations, _recalculateRandomPoints = false) => {
+let update = (deltaTime, iterations, _recalculateRandomPoints, _transformMatrix, _perspectiveMatrix) => {
 
+    transformMatrix =_transformMatrix;
+    perspectiveMatrix = _perspectiveMatrix;
 
     if(_recalculateRandomPoints) generateRandomPoints();
 
@@ -448,7 +478,10 @@ let update = (deltaTime, iterations, _recalculateRandomPoints = false) => {
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, collisionsFB);
         gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
         gl.useProgram(collisionsProgram);
+
         gl.uniform1f(collisionsProgram.voxelResolution, voxelResolution);
+        gl.uniform1f(collisionsProgram.planeX, planeX);
+
         webGL2.bindTexture(collisionsProgram.positions, iterationsTextureA, 0);
         webGL2.bindTexture(collisionsProgram.prevPositions, positionsTexture, 1);
         webGL2.bindTexture(collisionsProgram.centerOfMass, centerOfMassTexture, 2);
@@ -456,7 +489,6 @@ let update = (deltaTime, iterations, _recalculateRandomPoints = false) => {
         webGL2.bindTexture(collisionsProgram.linearMatrix0, linearMatrixTexture0, 4);
         webGL2.bindTexture(collisionsProgram.linearMatrix1, linearMatrixTexture1, 5);
         webGL2.bindTexture(collisionsProgram.linearMatrix2, linearMatrixTexture2, 6);
-        webGL2.bindTexture(collisionsProgram.velocityTexture, velocityTexture, 7);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.POINTS, 0, totalParticles);
 
@@ -512,7 +544,7 @@ let update = (deltaTime, iterations, _recalculateRandomPoints = false) => {
     gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
     gl.useProgram(updateVelocityProgram);
     gl.uniform1f(updateVelocityProgram.deltaTime, deltaTime);
-    webGL2.bindTexture(updateVelocityProgram.position, iterationsTextureB, 0);
+    webGL2.bindTexture(updateVelocityProgram.position, iterationsTextureA, 0);
     webGL2.bindTexture(updateVelocityProgram.positionOld, prevPositionsTexture, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.POINTS, 0, totalParticles);
@@ -523,7 +555,7 @@ let update = (deltaTime, iterations, _recalculateRandomPoints = false) => {
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, positionsFB);
     gl.viewport(0, 0, particlesTextureSize, particlesTextureSize);
     gl.useProgram(textureProgram);
-    webGL2.bindTexture(textureProgram.texture, iterationsTextureB, 0);
+    webGL2.bindTexture(textureProgram.texture, iterationsTextureA, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 

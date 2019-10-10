@@ -19,7 +19,10 @@ void main() {
     gl_Position = vec4(2. * index - vec2(1.), 0., 1.);
     gl_PointSize = 1.;
 
-    colorData = vec4((texture(uPosition, index).rgb - texture(uPositionOld, index).rgb) / max(uDeltaTime, EPSILON), 1.);
+    vec4 prevPositionData = texture(uPositionOld, index);
+    vec3 velocity = (texture(uPosition, index).rgb - prevPositionData.rgb) / max(uDeltaTime, EPSILON);
+        
+    colorData = vec4(velocity, 1.);
 
 }
 

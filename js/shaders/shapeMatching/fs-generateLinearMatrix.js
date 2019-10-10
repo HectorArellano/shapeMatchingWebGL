@@ -49,9 +49,9 @@ void main() {
 
     //Linear extension
     mat3 A = Apq * inverse(Aqq);
-    A = pow(determinant(A), 1./ 4.) * A;
+    A = pow(determinant(A), 1./ 3.) * A;
 
-    float beta = 0.2;
+    float beta = 0.0;
     A = beta * A + (1. - beta) * R;
 
     data1 = vec4(A[0], uShapeId);

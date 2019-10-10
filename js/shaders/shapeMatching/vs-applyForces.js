@@ -30,6 +30,8 @@ void main() {
 
     vec3 acceleration = 6. * normalize(attractor - centerOfMass);
     
+    acceleration = vec3(0., -10., 0.);
+    
     colorData = vec4(positionData.rgb + (texture(uTextureVelocity, index).rgb + acceleration * uDeltaTime) * uDeltaTime, positionData.a);
 }
 

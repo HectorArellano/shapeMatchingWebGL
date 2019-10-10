@@ -11,8 +11,7 @@ uniform float uVoxelResolution;
 uniform sampler2D uLinearMatrix0;
 uniform sampler2D uLinearMatrix1;
 uniform sampler2D uLinearMatrix2;
-uniform sampler2D uVelocityTexture;
-
+uniform float uPlaneX;
 
 out vec4 colorData1;
 out vec4 colorData2;
@@ -32,28 +31,24 @@ void main() {
 
     vec4 positionData = texture(uPositions, index);
 
-    vec3 velocity = texture(uVelocityTexture, index).rgb;
-
     vec3 position = positionData.rgb;
 
     vec3 prevPosition = texture(uPrevPositions, index).rgb;
 
-
-    //Collision against bounding spheres (broadphase detection)
+    //Collision against bounding spheres (broad phase detection)
     int amountOfShapes = textureSize(uCenterOfMass, 0).x;
-
 
     for(int i = 0; i < amountOfShapes; i ++) {
 
-        if((positionData.a - 1.) != float(i)) {
+        if( (positionData.a - 1.) != float(i) ) {
 
-            float amountOfParticles = texelFetch(uShapesInfo, ivec2(3 * i, 0), 0).r;
-            float c_shapeSide = texelFetch(uShapesInfo, ivec2(3 * i + 1, 0), 0).r;
-            vec3 centerOfMass = texelFetch(uCenterOfMass, ivec2(i, 0), 0).rgb / amountOfParticles;
+            float amountOfParticles =   texelFetch(uShapesInfo, ivec2(3 * i, 0), 0).r;
+            float c_shapeSide =         texelFetch(uShapesInfo, ivec2(3 * i + 1, 0), 0).r;
+            vec3 centerOfMass =         texelFetch(uCenterOfMass, ivec2(i, 0), 0).rgb / amountOfParticles;
 
             //Test the bounding spheres before checking the inner particles
             vec3 d = (position - centerOfMass);
-            if(length(d) < 1.5 * c_shapeSide) {
+            if(length(d) < 1.7 * c_shapeSide) {
 
                 //Test the inner particles from the shape
                 int partialParticles = int(amountOfParticles);
@@ -65,35 +60,52 @@ void main() {
                     vec3 c_dist = position - c_position;
                     if(length(c_dist) < 2.) {
 
-                        vec3 ll = prevPosition;
-                        // prevPosition = position;
-                        position = c_position + 2.* normalize(ll - c_position);
-
+                        position = c_position + 2. * normalize(prevPosition - c_position);
+                        prevPosition = position;
                     }
                 }
-
             }
         }
     }
 
-
-    //Collision against a sphere border
     vec3 center = vec3(uVoxelResolution * 0.5);
     float radius = uVoxelResolution * 0.5;
+
+    //Collision against a sphere border
     vec3 normal = position - center;
     float n = length(normal);
     float distance = n -  radius;
-
-//    float distance = position.y;
-
     if(distance > 0. ) {
-
-//        position.y = 0.;
        position = center + normalize(normal) * radius;
-       prevPosition = position;
-
+       // prevPosition = position;
     }
 
+
+    //Collision against a cylinder border
+    // vec2 n = position.yz - center.yz;
+    // float distance = length(n) - radius;
+    // if(distance > 0.) {
+    //     position.yz = center.yz + normalize(n) * radius;
+    //     // prevPosition = position;
+    // }
+    //
+    // //Collision against planes
+    //
+    // if(position.x < center.x - 0.24 * radius) {
+    //     position.x = center.x - 0.24 * radius;
+    //     // prevPosition = position;
+    // }
+    //
+    // if(position.x > center.x + 0.24 * radius) {
+    //     position.x = center.x + 0.24 * radius;
+    //     // prevPosition = position;
+    // }
+    
+    if(position.z < uPlaneX) {
+        position.z = uPlaneX;
+        // prevPosition = position;
+    }
+    
 
     //This is the new iteration position
     colorData1 = vec4(position, positionData.a);
