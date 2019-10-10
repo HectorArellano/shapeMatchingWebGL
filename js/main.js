@@ -28,7 +28,7 @@ let FOV = 30;
 let currentFrame = 0;
 
 const voxelResolution = 40;
-const iterations = 15;
+const iterations = 6;
 const deltaTime = 0.1;
 
 

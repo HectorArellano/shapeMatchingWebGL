@@ -34,8 +34,8 @@ let shapeInfo = [];
 
 let voxelResolution; //Define this with the init function
 
-let latitudeBands = 30;
-let longitudeBands = 30;
+let latitudeBands = 20;
+let longitudeBands = 20;
 let amountOfShapes = 0;
 
 let planeX = 0;
