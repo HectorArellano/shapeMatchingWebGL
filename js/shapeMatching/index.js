@@ -34,8 +34,8 @@ let shapeInfo = [];
 
 let voxelResolution; //Define this with the init function
 
-let latitudeBands = 20;
-let longitudeBands = 20;
+let latitudeBands = 10;
+let longitudeBands = 10;
 let amountOfShapes = 0;
 
 let planeX = 0;
@@ -105,6 +105,149 @@ let textureProgram,
 //=======================================================================================================
 // Helper function used for the initial state and simulation steps
 //=======================================================================================================
+
+const generateBox = (side, center, stiffness) => {
+
+    amountOfShapes ++;
+
+    let partialParticles = 0;
+
+    for(let u = 0; u < 2; u ++) {
+        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+                let second = first + longitudeBands + 1;
+
+                indexParticles.push(first + totalParticles);
+                indexParticles.push(second + totalParticles);
+                indexParticles.push(first + 1 + totalParticles);
+
+                indexParticles.push(second + totalParticles);
+                indexParticles.push(second + 1 + totalParticles);
+                indexParticles.push(first + 1 + totalParticles);
+                totalIndexes += 6;
+            }
+        }
+
+
+        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+            let aa = side * latNumber / latitudeBands;
+
+            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+                let bb = side * longNumber / longitudeBands;
+
+                let x = aa - 0.5 * side + center.x;
+                let y = bb - 0.5 * side + center.y;
+                let z = 0.5 * side * (-1 + 2 * u) + center.z;
+
+                particlesPosition.push(x, y, z, amountOfShapes);
+                particlesVelocity.push(0, 0, 0, 0);
+                totalParticles++;
+                partialParticles++;
+            }
+        }
+    }
+
+    for(let u = 0; u < 2; u ++) {
+        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+                let second = first + longitudeBands + 1;
+
+                indexParticles.push(first + totalParticles);
+                indexParticles.push(second + totalParticles);
+                indexParticles.push(first + 1 + totalParticles);
+
+                indexParticles.push(second + totalParticles);
+                indexParticles.push(second + 1 + totalParticles);
+                indexParticles.push(first + 1 + totalParticles);
+                totalIndexes += 6;
+            }
+        }
+
+
+        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+            let aa = side * latNumber / latitudeBands;
+
+            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+                let bb = side * longNumber / longitudeBands;
+
+                let y = aa - 0.5 * side + center.y;
+                let z = bb - 0.5 * side + center.z;
+                let x = 0.5 * side * (-1 + 2 * u) + center.x;
+
+                particlesPosition.push(x, y, z, amountOfShapes);
+                particlesVelocity.push(0, 0, 0, 0);
+                totalParticles++;
+                partialParticles++;
+            }
+        }
+    }
+
+    for(let u = 0; u < 2; u ++) {
+        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+                let first = (latNumber * (longitudeBands + 1)) + longNumber;
+                let second = first + longitudeBands + 1;
+
+                indexParticles.push(first + totalParticles);
+                indexParticles.push(second + totalParticles);
+                indexParticles.push(first + 1 + totalParticles);
+
+                indexParticles.push(second + totalParticles);
+                indexParticles.push(second + 1 + totalParticles);
+                indexParticles.push(first + 1 + totalParticles);
+                totalIndexes += 6;
+            }
+        }
+
+
+        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+            let aa = side * latNumber / latitudeBands;
+
+            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+                let bb = side * longNumber / longitudeBands;
+
+                let x = aa - 0.5 * side + center.x;
+                let z = bb - 0.5 * side + center.z;
+                let y = 0.5 * side * (-1 + 2 * u) + center.y;
+
+                particlesPosition.push(x, y, z, amountOfShapes);
+                particlesVelocity.push(0, 0, 0, 0);
+                totalParticles++;
+                partialParticles++;
+            }
+        }
+    }
+
+
+    //For the internal voxels.
+    for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+        let aa = side * latNumber / latitudeBands;
+
+        for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+            let bb = side * longNumber / longitudeBands;
+
+            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+                let cc = side * longNumber / longitudeBands;
+
+                let x = aa - 0.5 * side + center.x;
+                let y = bb - 0.5 * side + center.y;
+                let z = cc - 0.5 * side + center.z;
+
+                particlesPosition.push(x, y, z, amountOfShapes);
+                particlesVelocity.push(0, 0, 0, 0);
+                totalParticles++;
+                partialParticles++;
+            }
+        }
+    }
+
+
+    //This is for the shape information
+    shapeInfo.push(partialParticles, side, stiffness);
+
+}
 
 
 const generateSphere = (radius, center, stiffness) => {
@@ -262,13 +405,17 @@ const init = (_voxelResolution) => {
     //Generate the soft body spheres
     const r = 0.3 * voxelResolution;
     const c = 0.5 * voxelResolution;
-    for(let x = 0; x <= 0; x ++) {
-        for(let y = 0; y <= 0; y ++) {
-            for(let z = -1; z <= 1; z ++) {
-                generateSphere(0.4 * r, {x: c + x * r, y: c + y * r , z: c + z * r}, 0.1);
-            }
-        }
-    }
+//    for(let x = 0; x <= 0; x ++) {
+//        for(let y = 0; y <= 0; y ++) {
+//            for(let z = -1; z <= 1; z ++) {
+//                generateBox(0.4 * r, {x: c + x * r, y: c + y * r , z: c + z * r}, 0.1);
+//            }
+//        }
+//    }
+
+    generateBox(5, {x: 20, y: 10, z: 20}, 0.5);
+    generateBox(5, {x: 20, y: 20, z: 20}, 0.5);
+    generateBox(5, {x: 20, y: 30, z: 20}, 0.5);
 
     console.log("the total particles are: " + totalParticles);
 
@@ -566,121 +713,4 @@ let update = (deltaTime, iterations, _recalculateRandomPoints, _transformMatrix,
 export {init, update, positionsTexture, totalParticles, indexParticles}
 
 
-//function generateBox(side, center, stiffness) {
-//
-//    amountOfShapes ++;
-//
-//    let partialParticles = 0;
-//
-//    for(let u = 0; u < 2; u ++) {
-//        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
-//            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
-//                let first = (latNumber * (longitudeBands + 1)) + longNumber;
-//                let second = first + longitudeBands + 1;
-//
-//                indexParticles.push(first + totalParticles);
-//                indexParticles.push(second + totalParticles);
-//                indexParticles.push(first + 1 + totalParticles);
-//
-//                indexParticles.push(second + totalParticles);
-//                indexParticles.push(second + 1 + totalParticles);
-//                indexParticles.push(first + 1 + totalParticles);
-//                totalIndexes += 6;
-//            }
-//        }
-//
-//
-//        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
-//            let aa = side * latNumber / latitudeBands;
-//
-//            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-//                let bb = side * longNumber / longitudeBands;
-//
-//                let x = aa - 0.5 * side + center.x;
-//                let y = bb - 0.5 * side + center.y;
-//                let z = 0.5 * side * (-1 + 2 * u) + center.z;
-//
-//                particlesPosition.push(x, y, z, amountOfShapes);
-//                particlesVelocity.push(0, 0, 0, 0);
-//                totalParticles++;
-//                partialParticles++;
-//            }
-//        }
-//    }
-//
-//    for(let u = 0; u < 2; u ++) {
-//        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
-//            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
-//                let first = (latNumber * (longitudeBands + 1)) + longNumber;
-//                let second = first + longitudeBands + 1;
-//
-//                indexParticles.push(first + totalParticles);
-//                indexParticles.push(second + totalParticles);
-//                indexParticles.push(first + 1 + totalParticles);
-//
-//                indexParticles.push(second + totalParticles);
-//                indexParticles.push(second + 1 + totalParticles);
-//                indexParticles.push(first + 1 + totalParticles);
-//                totalIndexes += 6;
-//            }
-//        }
-//
-//
-//        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
-//            let aa = side * latNumber / latitudeBands;
-//
-//            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-//                let bb = side * longNumber / longitudeBands;
-//
-//                let y = aa - 0.5 * side + center.y;
-//                let z = bb - 0.5 * side + center.z;
-//                let x = 0.5 * side * (-1 + 2 * u) + center.x;
-//
-//                particlesPosition.push(x, y, z, amountOfShapes);
-//                particlesVelocity.push(0, 0, 0, 0);
-//                totalParticles++;
-//                partialParticles++;
-//            }
-//        }
-//    }
-//
-//    for(let u = 0; u < 2; u ++) {
-//        for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
-//            for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
-//                let first = (latNumber * (longitudeBands + 1)) + longNumber;
-//                let second = first + longitudeBands + 1;
-//
-//                indexParticles.push(first + totalParticles);
-//                indexParticles.push(second + totalParticles);
-//                indexParticles.push(first + 1 + totalParticles);
-//
-//                indexParticles.push(second + totalParticles);
-//                indexParticles.push(second + 1 + totalParticles);
-//                indexParticles.push(first + 1 + totalParticles);
-//                totalIndexes += 6;
-//            }
-//        }
-//
-//
-//        for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
-//            let aa = side * latNumber / latitudeBands;
-//
-//            for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-//                let bb = side * longNumber / longitudeBands;
-//
-//                let x = aa - 0.5 * side + center.x;
-//                let z = bb - 0.5 * side + center.z;
-//                let y = 0.5 * side * (-1 + 2 * u) + center.y;
-//
-//                particlesPosition.push(x, y, z, amountOfShapes);
-//                particlesVelocity.push(0, 0, 0, 0);
-//                totalParticles++;
-//                partialParticles++;
-//            }
-//        }
-//    }
-//
-//    //This is for the shape information
-//    shapeInfo.push(partialParticles, side, stiffness);
-//
-//}
+
