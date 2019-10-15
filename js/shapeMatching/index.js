@@ -34,8 +34,8 @@ let shapeInfo = [];
 
 let voxelResolution; //Define this with the init function
 
-let latitudeBands = 10;
-let longitudeBands = 10;
+let latitudeBands = 5;
+let longitudeBands = 5;
 let amountOfShapes = 0;
 
 let planeX = 0;
@@ -413,9 +413,10 @@ const init = (_voxelResolution) => {
 //        }
 //    }
 
-    generateBox(5, {x: 20, y: 10, z: 20}, 0.5);
-    generateBox(5, {x: 20, y: 20, z: 20}, 0.5);
-    generateBox(5, {x: 20, y: 30, z: 20}, 0.5);
+    generateBox(5, {x: 20, y: 10, z: 20}, 0.2);
+    generateBox(5, {x: 20, y: 20, z: 22}, 0.2);
+    generateBox(5, {x: 20, y: 30, z: 24}, 0.2);
+    generateBox(5, {x: 20, y: 40, z: 26}, 0.2);
 
     console.log("the total particles are: " + totalParticles);
 

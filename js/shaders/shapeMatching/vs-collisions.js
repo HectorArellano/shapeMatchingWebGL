@@ -57,7 +57,7 @@ void main() {
 
             vec3 xLocal = (linearMatrix) * (position - centerOfMass);
 
-            float d = sdBox(xLocal,  vec3(1. * c_shapeSide));
+            float d = sdBox(xLocal,  vec3(1.3 * c_shapeSide));
 
             if(d <= 0.) {
 
@@ -69,9 +69,9 @@ void main() {
                     vec3 c_position = texture(uPositions, c_index).rgb;
 
                     vec3 c_dist = position - c_position;
-                    if(length(c_dist) < 2.) {
+                    if(length(c_dist) < 1.3) {
 
-                        position = c_position + 2. * normalize(prevPosition - c_position);
+                        position = c_position + 1.3 * normalize(prevPosition - c_position);
                         prevPosition = position;
                     }
                 }
