@@ -8,7 +8,7 @@ import {fsTextureColor}         from './shaders/utils/fs-simpleTexture.js';
 import {vsQuad}                 from './shaders/utils/vs-quad.js';
 import {vsRenderBGSphere}       from './shaders/utils/vs-renderBGSphere.js';
 
-import * as ShapeMatching       from './shapeMatching'
+import * as ShapeMatching       from './shapeMatching/index.js'
 
 
 //=======================================================================================================
