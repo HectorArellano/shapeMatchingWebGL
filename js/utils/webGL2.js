@@ -83,6 +83,33 @@ const createTexture2D = (width, height, internalFormat, format, maxFilter, minFi
     }
 }
 
+//Function used to generate a texture from an image
+const createTextureFromImage = image => {
+    if (contextReady) {
+      let texture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+  
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+  
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_MIN_FILTER,
+        gl.LINEAR_MIPMAP_NEAREST
+      );
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+  
+      return texture;
+    } else {
+      console.log(new Error("Content not set yet"));
+    }
+  };
+
 //Function used to attach the attributes buffer
 const bindAttribBuffer = (attribLocation, buffer, bufferDataSize) => {
     gl.enableVertexAttribArray(attribLocation);
@@ -145,18 +172,6 @@ const createDrawFramebuffer = (_textures, useDepth = false, useStencil = false) 
     }
 }
 
-
-export {
-    gl,
-    setContext,
-    generateProgram,
-    createTexture2D,
-    bindTexture,
-    createBuffer,
-    createDrawFramebuffer,
-    bindAttribBuffer
-}
-
 //=======================================================================================================
 // Private functions
 //=======================================================================================================
@@ -177,4 +192,16 @@ const getShader = (str, type) => {
         return null;
     }
     return shader;
+}
+
+export {
+    gl,
+    setContext,
+    generateProgram,
+    createTexture2D,
+    bindTexture,
+    createBuffer,
+    createDrawFramebuffer,
+    bindAttribBuffer,
+    createTextureFromImage
 }

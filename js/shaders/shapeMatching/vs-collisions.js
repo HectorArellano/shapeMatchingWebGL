@@ -46,20 +46,7 @@ void main() {
             float c_shapeSide =         texelFetch(uShapesInfo, ivec2(3 * i + 1, 0), 0).r;
             vec3 centerOfMass =         texelFetch(uCenterOfMass, ivec2(i, 0), 0).rgb / amountOfParticles;
 
-            mat3 linearMatrix = mat3(0.);
-            linearMatrix[0] = texelFetch(uLinearMatrix0, ivec2(i, 0), 0).rgb;
-            linearMatrix[1] = texelFetch(uLinearMatrix1, ivec2(i, 0), 0).rgb;
-            linearMatrix[2] = texelFetch(uLinearMatrix2, ivec2(i, 0), 0).rgb;
-
-            if(length(linearMatrix[0]) == 0. && length(linearMatrix[1]) == 0. && length(linearMatrix[2]) == 0.) {
-                linearMatrix = mat3(1., 0., 0., 0., 1., 0., 0., 0., 1.);
-            }
-
-            vec3 xLocal = (linearMatrix) * (position - centerOfMass);
-
-            float d = sdBox(xLocal,  vec3(1.3 * c_shapeSide));
-
-            if(d <= 0.) {
+            if(length(centerOfMass - position) < c_shapeSide) {
 
                 //Test the inner particles from the shape
                 int partialParticles = int(amountOfParticles);

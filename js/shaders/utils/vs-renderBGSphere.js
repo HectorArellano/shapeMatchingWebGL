@@ -1,6 +1,6 @@
 const vsRenderBGSphere = `#version 300 es
 
-in vec4 aPositions;
+in vec2 aUV;
 
 uniform sampler2D uTexturePosition;
 uniform mat4 uCameraMatrix;
@@ -8,6 +8,7 @@ uniform mat4 uPMatrix;
 uniform float uScale;
 
 out vec4 colorData;
+out vec2 uv;
 
 void main() {
 
@@ -19,6 +20,8 @@ void main() {
     vec3 spacePosition = texture(uTexturePosition, index).rgb;
 
     vec4 positions = vec4(spacePosition.rgb / uScale, 1.);
+
+    uv = aUV;
 
     gl_Position = uPMatrix * uCameraMatrix * positions;
     colorData = vec4(positions.rgb, .5);
